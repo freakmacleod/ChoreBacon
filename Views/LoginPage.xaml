@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             x:Class="ChoreBacon.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#121212}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="40,60" Spacing="24" VerticalOptions="Center">
+
+            <!-- Logo / Title -->
+            <Image Source="chorebacon_logo.png" HeightRequest="100" HorizontalOptions="Center" />
+
+            <Label Text="ChoreBacon"
+                   FontSize="36" FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" />
+
+            <Label Text="Earn points. Complete chores. Get rewards."
+                   FontSize="16"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}" />
+
+            <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E0E0E0, Dark=#333333}" Margin="0,8" />
+
+            <!-- Google Login -->
+            <Button Text="Continue with Google"
+                    Command="{Binding LoginWithGoogleCommand}"
+                    IsEnabled="{Binding IsNotBusy}"
+                    BackgroundColor="#FFFFFF"
+                    TextColor="#333333"
+                    BorderColor="#DADCE0"
+                    BorderWidth="1"
+                    CornerRadius="8"
+                    HeightRequest="52"
+                    FontSize="16" />
+
+            <!-- Facebook Login -->
+            <Button Text="Continue with Facebook"
+                    Command="{Binding LoginWithFacebookCommand}"
+                    IsEnabled="{Binding IsNotBusy}"
+                    BackgroundColor="#1877F2"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="52"
+                    FontSize="16" />
+
+            <!-- Busy Indicator -->
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}"
+                               HorizontalOptions="Center" />
+
+            <!-- Error Message -->
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                   TextColor="#F44336"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   FontSize="14" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
