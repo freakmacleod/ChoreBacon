@@ -46,7 +46,36 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+
+		<!-- Swedish is the default UI language; AppResources.resx holds sv-SE strings. -->
+		<NeutralLanguage>sv-SE</NeutralLanguage>
 	</PropertyGroup>
+
+	<!-- API base URL, baked in as assembly metadata and read by ApiConfig. Override per build with
+	     -p:ChoreBaconApiBaseUrl=https://chorebacon.vercel.app/ (e.g. to test real Google/Facebook login,
+	     whose redirect URIs are only registered for production and localhost). -->
+	<PropertyGroup Condition="'$(ChoreBaconApiBaseUrl)' == ''">
+		<ChoreBaconApiBaseUrl Condition="'$(Configuration)' == 'Release'">https://chorebacon.vercel.app/</ChoreBaconApiBaseUrl>
+		<!-- The Android emulator reaches the host machine's localhost via 10.0.2.2. -->
+		<ChoreBaconApiBaseUrl Condition="'$(ChoreBaconApiBaseUrl)' == '' And $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">http://10.0.2.2:3000/</ChoreBaconApiBaseUrl>
+		<ChoreBaconApiBaseUrl Condition="'$(ChoreBaconApiBaseUrl)' == ''">http://localhost:3000/</ChoreBaconApiBaseUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyMetadata Include="ApiBaseUrl" Value="$(ChoreBaconApiBaseUrl)" />
+		<InternalsVisibleTo Include="ChoreBacon.App.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Strongly typed accessors (ChoreBacon.Resources.Strings.AppResources), generated at build time
+		     so it works from the CLI as well as in Visual Studio. -->
+		<EmbeddedResource Update="Resources\Strings\AppResources.resx"
+		                  StronglyTypedFileName="$(IntermediateOutputPath)AppResources.Designer.cs"
+		                  StronglyTypedLanguage="CSharp"
+		                  StronglyTypedNamespace="ChoreBacon.Resources.Strings"
+		                  StronglyTypedClassName="AppResources"
+		                  PublicClass="true" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<!-- App Icon -->
@@ -70,9 +99,14 @@
 		<PackageReference Include="CommunityToolkit.Maui" Version="14.0.1" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.51" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.5" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\ChoreBacon.Contracts\ChoreBacon.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>

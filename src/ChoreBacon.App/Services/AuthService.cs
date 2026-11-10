@@ -1,102 +1,166 @@
+using System.Net;
+using ChoreBacon.Contracts.Auth;
 using ChoreBacon.Models;
+using ChoreBacon.Services.Api;
+using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
 
 namespace ChoreBacon.Services;
 
 /// <summary>
-/// Handles OAuth login via Google and Facebook.
-/// OAuth client IDs must be configured in Platforms/Android/AndroidManifest.xml
-/// and Platforms/iOS/Info.plist before use.
+/// Signs in through the ChoreBacon API: the system browser runs the Google/Facebook OAuth flow against
+/// the backend, which answers with its own tokens on <c>chorebacon://auth</c>. Tokens live only in
+/// SecureStorage (via <see cref="TokenManager"/>).
 /// </summary>
-public class AuthService : IAuthService
+/// <remarks>
+/// Until the API replaces SQLite (backlog item 5), the signed-in API user is mirrored into the local
+/// Users table so the existing chore/store/achievement services keep working.
+/// </remarks>
+public class AuthService(
+    IWebAuthenticator webAuthenticator,
+    IAuthApi authApi,
+    IChoreBaconApi api,
+    TokenManager tokens,
+    ApiConfig config,
+    IDatabaseService db,
+    TimeProvider time) : IAuthService
 {
-    private readonly IDatabaseService _db;
-
     public User? CurrentUser { get; private set; }
     public bool IsLoggedIn => CurrentUser is not null;
 
-    public AuthService(IDatabaseService db)
+    public Task<User?> LoginWithGoogleAsync(CancellationToken cancellationToken = default) =>
+        LoginWithProviderAsync("google", cancellationToken);
+
+    public Task<User?> LoginWithFacebookAsync(CancellationToken cancellationToken = default) =>
+        LoginWithProviderAsync("facebook", cancellationToken);
+
+    private async Task<User?> LoginWithProviderAsync(string provider, CancellationToken cancellationToken)
     {
-        _db = db;
-    }
-
-    public async Task<User?> LoginWithGoogleAsync()
-    {
-        // TODO: Replace with WebAuthenticator OAuth flow using your Google Client ID.
-        // Example integration point — wire in your OAuth redirect URI here.
-        //
-        // var result = await WebAuthenticator.Default.AuthenticateAsync(
-        //     new Uri("https://accounts.google.com/o/oauth2/v2/auth?..."),
-        //     new Uri("chorebacon://oauth/google"));
-        //
-        // string idToken = result.Properties["id_token"];
-        // Decode idToken (JWT) to extract sub, name, email, picture.
-
-        throw new NotImplementedException(
-            "Google OAuth not yet configured. Add your Google Client ID to AuthService.");
-    }
-
-    public async Task<User?> LoginWithFacebookAsync()
-    {
-        // TODO: Replace with WebAuthenticator OAuth flow using your Facebook App ID.
-        //
-        // var result = await WebAuthenticator.Default.AuthenticateAsync(
-        //     new Uri("https://www.facebook.com/dialog/oauth?..."),
-        //     new Uri("chorebacon://oauth/facebook"));
-        //
-        // string accessToken = result.AccessToken;
-        // Call https://graph.facebook.com/me?fields=id,name,email,picture
-
-        throw new NotImplementedException(
-            "Facebook OAuth not yet configured. Add your Facebook App ID to AuthService.");
-    }
-
-    public async Task LogoutAsync()
-    {
-        CurrentUser = null;
-        await SecureStorage.Default.SetAsync("current_user_id", string.Empty);
-    }
-
-    protected async Task<User> UpsertUserAsync(string externalId, string provider,
-        string displayName, string email, string pictureUrl)
-    {
-        var existing = await _db.GetUserByExternalIdAsync(externalId, provider);
-        if (existing is not null)
+        WebAuthenticatorResult result;
+        try
         {
-            existing.DisplayName = displayName;
-            existing.Email = email;
-            existing.ProfilePictureUrl = pictureUrl;
-            existing.LastLoginAt = DateTime.UtcNow;
-            await _db.SaveUserAsync(existing);
-            CurrentUser = existing;
-            return existing;
+            result = await webAuthenticator.AuthenticateAsync(
+                new WebAuthenticatorOptions
+                {
+                    Url = config.AuthStartUri(provider),
+                    CallbackUrl = new Uri(ApiConfig.CallbackUrl),
+                },
+                cancellationToken);
+        }
+        catch (TaskCanceledException)
+        {
+            return null; // user closed the browser
         }
 
-        var newUser = new User
-        {
-            ExternalId = externalId,
-            Provider = provider,
-            DisplayName = displayName,
-            Email = email,
-            ProfilePictureUrl = pictureUrl
-        };
-        await _db.SaveUserAsync(newUser);
-        CurrentUser = newUser;
-        await SecureStorage.Default.SetAsync("current_user_id", newUser.Id.ToString());
-        return newUser;
+        var properties = result.Properties;
+        if (properties.TryGetValue("error", out var error))
+            throw new AuthException(error);
+
+        if (!properties.TryGetValue("access_token", out var accessToken) ||
+            !properties.TryGetValue("refresh_token", out var refreshToken) ||
+            !properties.TryGetValue("expires_in", out var expiresIn) ||
+            !int.TryParse(expiresIn, out var expiresInSeconds))
+            throw new AuthException(AuthErrorCodes.ProviderError);
+
+        await tokens.SaveAsync(new TokenResponse(accessToken, refreshToken, "Bearer", expiresInSeconds));
+        return await CompleteSignInAsync(cancellationToken);
     }
 
-    public async Task<bool> TryRestoreSessionAsync()
+    public async Task<User> LoginAsDevAsync(CancellationToken cancellationToken = default)
     {
-        var idStr = await SecureStorage.Default.GetAsync("current_user_id");
-        if (string.IsNullOrWhiteSpace(idStr) || !int.TryParse(idStr, out var id))
+        TokenResponse issued;
+        try
+        {
+            issued = await authApi.DevLoginAsync("Testanvändare", cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AuthException(AuthException.NetworkError, ex);
+        }
+        catch (ApiException ex)
+        {
+            throw new AuthException(ex.Code, ex);
+        }
+
+        await tokens.SaveAsync(issued);
+        return await CompleteSignInAsync(cancellationToken);
+    }
+
+    public async Task<bool> TryRestoreSessionAsync(CancellationToken cancellationToken = default)
+    {
+        if (await tokens.LoadAsync() is null)
             return false;
 
-        var user = await _db.GetUserByIdAsync(id);
-        if (user is null)
+        try
+        {
+            // GetMe goes through AuthenticatedHttpHandler, which refreshes an expired access token.
+            await CompleteSignInAsync(cancellationToken);
+            return true;
+        }
+        catch (AuthException ex) when (ex.Code == AuthException.NetworkError)
+        {
+            // Offline: keep the tokens so the next start can resume, but show the login page for now.
             return false;
+        }
+        catch (AuthException)
+        {
+            await tokens.ClearAsync();
+            return false;
+        }
+    }
 
-        CurrentUser = user;
-        return true;
+    public async Task LogoutAsync(CancellationToken cancellationToken = default)
+    {
+        var stored = await tokens.LoadAsync();
+        await tokens.ClearAsync();
+        CurrentUser = null;
+
+        if (stored is null)
+            return;
+        try
+        {
+            await authApi.LogoutAsync(stored.RefreshToken, cancellationToken);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            // Best effort: the local session is already gone; the server chain expires on its own.
+        }
+    }
+
+    private async Task<User> CompleteSignInAsync(CancellationToken cancellationToken)
+    {
+        MeResponse me;
+        try
+        {
+            me = await api.GetMeAsync(cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new AuthException(AuthException.NetworkError, ex);
+        }
+        catch (ApiException ex)
+        {
+            if (ex.StatusCode == HttpStatusCode.Unauthorized)
+                await tokens.ClearAsync();
+            throw new AuthException(ex.Code, ex);
+        }
+
+        CurrentUser = await MirrorLocalUserAsync(me);
+        return CurrentUser;
+    }
+
+    private async Task<User> MirrorLocalUserAsync(MeResponse me)
+    {
+        var externalId = me.Id.ToString();
+        var user = await db.GetUserByExternalIdAsync(externalId, me.Provider) ?? new User
+        {
+            ExternalId = externalId,
+            Provider = me.Provider,
+        };
+        user.DisplayName = me.DisplayName;
+        user.Email = me.Email ?? string.Empty;
+        user.LastLoginAt = time.GetUtcNow().UtcDateTime;
+        await db.SaveUserAsync(user);
+        return user;
     }
 }
