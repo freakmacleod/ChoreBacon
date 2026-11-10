@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             xmlns:strings="clr-namespace:ChoreBacon.Resources.Strings"
              x:Class="ChoreBacon.Views.LoginPage"
              x:DataType="vm:LoginViewModel"
              Shell.NavBarIsVisible="False"
@@ -18,7 +19,7 @@
                    HorizontalOptions="Center"
                    TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" />
 
-            <Label Text="Earn points. Complete chores. Get rewards."
+            <Label Text="{x:Static strings:AppResources.Login_Tagline}"
                    FontSize="16"
                    HorizontalOptions="Center"
                    HorizontalTextAlignment="Center"
@@ -26,41 +27,64 @@
 
             <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E0E0E0, Dark=#333333}" Margin="0,8" />
 
-            <!-- Google Login -->
-            <Button Text="Continue with Google"
-                    Command="{Binding LoginWithGoogleCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#FFFFFF"
-                    TextColor="#333333"
-                    BorderColor="#DADCE0"
-                    BorderWidth="1"
-                    CornerRadius="8"
-                    HeightRequest="52"
-                    FontSize="16" />
-
-            <!-- Facebook Login -->
-            <Button Text="Continue with Facebook"
-                    Command="{Binding LoginWithFacebookCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#1877F2"
-                    TextColor="White"
-                    CornerRadius="8"
-                    HeightRequest="52"
-                    FontSize="16" />
-
-            <!-- Busy Indicator -->
-            <ActivityIndicator IsRunning="{Binding IsBusy}"
-                               IsVisible="{Binding IsBusy}"
+            <!-- Checking for a stored session -->
+            <ActivityIndicator IsRunning="{Binding IsRestoring}"
+                               IsVisible="{Binding IsRestoring}"
                                Color="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}"
                                HorizontalOptions="Center" />
 
-            <!-- Error Message -->
-            <Label Text="{Binding ErrorMessage}"
-                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
-                   TextColor="#F44336"
-                   HorizontalOptions="Center"
-                   HorizontalTextAlignment="Center"
-                   FontSize="14" />
+            <VerticalStackLayout Spacing="24" IsVisible="{Binding CanSignIn}">
+
+                <!-- Google Login -->
+                <Button Text="{x:Static strings:AppResources.Login_ContinueWithGoogle}"
+                        Command="{Binding LoginWithGoogleCommand}"
+                        IsEnabled="{Binding IsNotBusy}"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="#333333"
+                        BorderColor="#DADCE0"
+                        BorderWidth="1"
+                        CornerRadius="8"
+                        HeightRequest="52"
+                        FontSize="16" />
+
+                <!-- Facebook Login -->
+                <Button Text="{x:Static strings:AppResources.Login_ContinueWithFacebook}"
+                        Command="{Binding LoginWithFacebookCommand}"
+                        IsEnabled="{Binding IsNotBusy}"
+                        BackgroundColor="#1877F2"
+                        TextColor="White"
+                        CornerRadius="8"
+                        HeightRequest="52"
+                        FontSize="16" />
+
+                <!-- DEBUG builds only: test login via /api/v1/auth/dev -->
+                <Button Text="{x:Static strings:AppResources.Login_DevUser}"
+                        Command="{Binding LoginAsDevCommand}"
+                        IsVisible="{Binding IsDevLoginAvailable}"
+                        IsEnabled="{Binding IsNotBusy}"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}"
+                        BorderColor="{AppThemeBinding Light=#BDBDBD, Dark=#555555}"
+                        BorderWidth="1"
+                        CornerRadius="8"
+                        HeightRequest="44"
+                        FontSize="14" />
+
+                <!-- Busy Indicator -->
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}"
+                                   HorizontalOptions="Center" />
+
+                <!-- Error Message -->
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                       TextColor="#F44336"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       FontSize="14" />
+
+            </VerticalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>
