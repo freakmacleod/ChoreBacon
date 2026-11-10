@@ -15,7 +15,10 @@ public class DatabaseService : IDatabaseService
 
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, "chorebacon.db3");
         _db = new SQLiteAsyncConnection(dbPath, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.SharedCache);
-        await _db.CreateTablesAsync<User, Chore, ChoreCompletion, Achievement, UserAchievement, RewardItem, PointTransaction>();
+        // The generic overloads stop at 5 type arguments, so use the Type[] overload for all 7 tables.
+        await _db.CreateTablesAsync(CreateFlags.None,
+            typeof(User), typeof(Chore), typeof(ChoreCompletion), typeof(Achievement),
+            typeof(UserAchievement), typeof(RewardItem), typeof(PointTransaction));
         return _db;
     }
 
