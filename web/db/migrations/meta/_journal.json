@@ -29,6 +29,13 @@
       "when": 1794330247126,
       "tag": "0003_refresh_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794424036084,
+      "tag": "0004_achievements_active",
+      "breakpoints": true
     }
   ]
 }
