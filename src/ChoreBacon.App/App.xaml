@@ -14,9 +14,9 @@
             <helpers:StringToBoolConverter x:Key="StringToBoolConverter" />
             <helpers:InverseBoolConverter x:Key="InverseBoolConverter" />
             <helpers:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
-            <helpers:BoolToCompletedTextConverter x:Key="BoolToCompletedTextConverter" />
             <helpers:BoolToCompletedColorConverter x:Key="BoolToCompletedColorConverter" />
             <helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
+            <helpers:IconKeyConverter x:Key="IconKeyConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

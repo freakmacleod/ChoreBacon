@@ -1,8 +1,8 @@
 using ChoreBacon.Contracts.Auth;
-using ChoreBacon.Models;
 using ChoreBacon.Resources.Strings;
 using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
+using ChoreBacon.Services.Ui;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -11,6 +11,7 @@ namespace ChoreBacon.ViewModels;
 public partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _auth;
+    private readonly INavigator _navigator;
 
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
@@ -28,9 +29,10 @@ public partial class LoginViewModel : BaseViewModel
     public bool IsDevLoginAvailable => false;
 #endif
 
-    public LoginViewModel(IAuthService auth)
+    public LoginViewModel(IAuthService auth, INavigator navigator)
     {
         _auth = auth;
+        _navigator = navigator;
         Title = AppResources.Login_Title;
     }
 
@@ -61,7 +63,7 @@ public partial class LoginViewModel : BaseViewModel
     private Task LoginAsDevAsync(CancellationToken cancellationToken) =>
         SignInAsync(async ct => await _auth.LoginAsDevAsync(ct), cancellationToken);
 
-    private async Task SignInAsync(Func<CancellationToken, Task<User?>> signIn, CancellationToken cancellationToken)
+    private async Task SignInAsync(Func<CancellationToken, Task<MeResponse?>> signIn, CancellationToken cancellationToken)
     {
         if (IsBusy) return;
         IsBusy = true;
@@ -95,5 +97,5 @@ public partial class LoginViewModel : BaseViewModel
         _ => AppResources.Login_Error_Generic,
     };
 
-    private static Task GoToMainAsync() => Shell.Current.GoToAsync("//dashboard");
+    private Task GoToMainAsync() => _navigator.GoToAsync(Routes.Dashboard);
 }
