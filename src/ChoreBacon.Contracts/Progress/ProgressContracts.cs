@@ -61,9 +61,11 @@ public sealed record ChoreDto(
 
 public sealed record CompletionDto(Guid Id, Guid ChoreId, string LocalDate, string PeriodKey, CompletionStatus Status, DateTimeOffset CompletedAt);
 
+/// <param name="PointsPending">Points waiting for a parent's approval (then PointsEarned is 0).</param>
 public sealed record CompleteChoreResponse(
     CompletionDto Completion,
     int PointsEarned,
+    int PointsPending,
     int Balance,
     IReadOnlyList<AchievementDto> UnlockedAchievements);
 

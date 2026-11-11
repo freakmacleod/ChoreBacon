@@ -48,9 +48,7 @@ export const sv = {
     new: "Ny belöning",
     edit: "Redigera belöning",
     cost: "Kostnad (poäng)",
-    stock: "Lager",
-    stockHint: "Tomt = obegränsat. 0 = slutsåld. Lagret fylls aldrig på automatiskt.",
-    unlimited: "Obegränsat",
+    stockHint: "Globala belöningar har obegränsat lager. Lager räknas per familj och sätts av föräldrar.",
   },
   achievements: {
     title: "Prestationer",

@@ -7,9 +7,9 @@ earn points and redeem them for real-life rewards, unlocking achievements along 
 The chore, reward and achievement catalog is managed in a web admin and served by an API
 hosted on Vercel in the EU (Frankfurt).
 
-> **Status:** early development. Sign-in (Google, Facebook) and the API for chores, rewards,
-> achievements and progress work end to end; the app keeps no local database. The admin GUI
-> and families are next. See the backlog in [CLAUDE.md](CLAUDE.md).
+> **Status:** early development. Sign-in (Google, Facebook), the API for chores, rewards, achievements
+> and progress, the admin GUI (`/admin`) and families (invite codes, parent approval, family catalog and
+> stock) work end to end; the app keeps no local database. See the backlog in [CLAUDE.md](CLAUDE.md).
 
 ## Repository layout
 

@@ -33,13 +33,10 @@ describe("admin form validation", () => {
     expect(parsed.ok || parsed.errors.points).toBe("Ange ett heltal");
   });
 
-  it("reads empty reward stock as unlimited and a number as explicit stock", () => {
-    const base = { title: "Glass", icon: "reward_icecream", cost: "100" };
-    const unlimited = parseForm(rewardInput, form({ ...base, stock: "" }));
-    const limited = parseForm(rewardInput, form({ ...base, stock: "3", isActive: "on" }));
-    expect(unlimited.ok && unlimited.data.stock).toBeNull();
-    expect(limited.ok && [limited.data.stock, limited.data.isActive]).toEqual([3, true]);
-    expect(parseForm(rewardInput, form({ ...base, stock: "-1" })).ok).toBe(false);
+  it("parses a global reward without stock (global rewards are unlimited)", () => {
+    const parsed = parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "100", stock: "3", isActive: "on" }));
+    expect(parsed).toEqual({ ok: true, data: { title: "Glass", description: "", icon: "reward_icecream", cost: 100, isActive: true } });
+    expect(parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "0" })).ok).toBe(false);
   });
 
   it("validates achievement rule, rarity and bonus", () => {

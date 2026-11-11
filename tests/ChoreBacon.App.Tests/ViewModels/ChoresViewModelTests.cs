@@ -59,6 +59,21 @@ public class ChoresViewModelTests
     }
 
     [Fact]
+    public async Task A_child_waiting_for_approval_sees_pending_points_not_earned_ones()
+    {
+        var chore = Dto.Chore("Diska", points: 10);
+        var item = await LoadWith(chore);
+        _api.OnCompleteChore = _ => Task.FromResult(Dto.PendingApproval(chore, balance: 40));
+
+        await _vm.CompleteChoreCommand.ExecuteAsync(item);
+
+        Assert.True(item.IsPending);
+        Assert.Equal(AppResources.Chores_Pending, item.ActionText);
+        Assert.Equal(40, _vm.Balance);
+        Assert.Equal(string.Format(AppResources.Chores_PendingApproval, 10, "Diska"), _vm.StatusMessage);
+    }
+
+    [Fact]
     public async Task Already_completed_409_marks_the_chore_done_and_shows_the_Swedish_reason()
     {
         var item = await LoadWith(Dto.Chore());

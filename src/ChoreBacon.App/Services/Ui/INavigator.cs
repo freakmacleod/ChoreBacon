@@ -19,4 +19,7 @@ public static class Routes
     public const string Chores = "//chores";
     public const string Store = "//store";
     public const string Achievements = "//achievements";
+    public const string Family = "//family";
+    public const string Approvals = "approvals";
+    public const string FamilyCatalog = "familycatalog";
 }

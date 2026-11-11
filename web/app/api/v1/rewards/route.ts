@@ -6,5 +6,5 @@ import { listRewards } from "@/lib/progress/service";
 export async function GET(request: Request) {
   const auth = requireUser(request);
   if ("response" in auth) return auth.response;
-  return json(await listRewards(db));
+  return json(await listRewards(db, auth.userId));
 }

@@ -33,6 +33,10 @@
             <ShellContent ContentTemplate="{DataTemplate views:AchievementsPage}" Route="achievements" />
         </Tab>
 
+        <Tab Title="{x:Static strings:AppResources.Tab_Family}" Icon="tab_family.png">
+            <ShellContent ContentTemplate="{DataTemplate views:FamilyPage}" Route="family" />
+        </Tab>
+
     </TabBar>
 
 </Shell>

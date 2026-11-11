@@ -30,7 +30,6 @@ async function RewardTable() {
         <tr>
           <th>{sv.common.title}</th>
           <th>{sv.rewards.cost}</th>
-          <th>{sv.rewards.stock}</th>
           <th>{sv.common.icon}</th>
           <th>{sv.common.status}</th>
           <th />
@@ -46,7 +45,6 @@ async function RewardTable() {
               {reward.description && <div className="text-xs text-zinc-500">{reward.description}</div>}
             </td>
             <td>{reward.cost}</td>
-            <td>{reward.stock ?? sv.rewards.unlimited}</td>
             <td className="font-mono text-xs">{reward.icon}</td>
             <td>
               <StatusBadge active={reward.isActive} labels={sv.common} />

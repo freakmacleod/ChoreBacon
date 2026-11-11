@@ -62,7 +62,20 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, balance, unlockedAchievements }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
 | GET | `/api/v1/rewards` | Active rewards; `stock` null = unlimited, 0 = sold out |
 | POST | `/api/v1/rewards/{id}/redeem` | 201 `{ redemption, balance, unlockedAchievements }`; 409 `insufficient_points` / `reward_out_of_stock` |
-| GET | `/api/v1/achievements` | All achievements; `unlockedAt` null while locked |
+| GET | `/api/v1/achievements` | Active achievements (plus inactive ones the user has); `unlockedAt` null while locked |
+| POST | `/api/v1/families` | `{ name }` → 201 family; caller becomes parent. 409 `already_in_family` |
+| POST | `/api/v1/families/join` | `{ code }` → family; joins as child. 404 `invalid_invite_code`, 409 `already_in_family` |
+| GET / PATCH | `/api/v1/me/family` | Family with members and balances (`inviteCode` for parents only); PATCH `{ name?, requiresApproval? }` (parents). 404 `no_family` |
+| POST | `/api/v1/me/family/leave` | 204; 409 `last_parent` while others remain without a parent |
+| POST | `/api/v1/me/family/invite-code` | Parents: new code, the old one stops working |
+| PATCH / DELETE | `/api/v1/me/family/members/{userId}` | Parents: `{ role }` or remove; 409 `last_parent` |
+| GET | `/api/v1/me/family/completions` | Parents: pending completions |
+| POST | `/api/v1/me/family/completions/{id}/approve` \| `reject` | Parents: approve (books points) or reject (frees the slot); 409 `not_pending` |
+| GET | `/api/v1/me/family/redemptions` | Parents: redemptions to hand over |
+| POST | `/api/v1/me/family/redemptions/{id}/fulfil` | Parents: mark handed over |
+| GET / POST | `/api/v1/me/family/chores` \| `rewards` | Parents: the family's catalog view; POST adds a family-only item |
+| PATCH | `/api/v1/me/family/chores/{id}` \| `rewards/{id}` | Parents: edit a family-only item |
+| PUT | `/api/v1/me/family/chores/{id}/settings` \| `rewards/{id}/settings` | Parents: switch a global item off, override points/cost, set the family's stock |
 
 Errors are always `{ "error": { "code", "message" } }`; the app maps `code` to Swedish text.
 
@@ -79,7 +92,14 @@ Implemented in `lib/progress/` (`rules.ts` pure, `service.ts` database):
 - **Achievements** (rule 1): points achievements use lifetime earned points, never the balance. Bonuses are
   ledger entries and can cascade into further points achievements.
 - **Streak**: consecutive Stockholm days with a completion, ending today or yesterday.
-- Until families exist, users see the active global catalog and completions are approved immediately.
+- **Families** (one per user): the creator is a parent; others join with the invite code as children (a parent can
+  promote them). Members see global items the family has not switched off, with its point/cost overrides, plus
+  family-only items. Solo users see the global catalog.
+- **Approval**: when the family requires it, a child's completion is `pending` and earns nothing until a parent
+  approves; approval books the points stored at completion time, rejection frees the slot. Parents' own completions
+  are approved immediately.
+- **Stock is per family**: global rewards are unlimited (a check constraint enforces it); families set stock on their
+  settings for a global reward or on their own rewards. Only a parent's explicit change restocks.
 
 `*.db.test.ts` tests run against the `development` branch from `.env.development.local` inside a rolled-back
 transaction; they are skipped when that file is missing.

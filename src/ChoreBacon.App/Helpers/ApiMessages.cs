@@ -1,3 +1,4 @@
+using ChoreBacon.Contracts.Family;
 using ChoreBacon.Contracts.Progress;
 using ChoreBacon.Resources.Strings;
 
@@ -16,6 +17,13 @@ public static class ApiMessages
         ProgressErrorCodes.RewardNotFound => AppResources.Error_RewardNotFound,
         ProgressErrorCodes.RewardOutOfStock => AppResources.Error_OutOfStock,
         ProgressErrorCodes.InsufficientPoints => AppResources.Error_InsufficientPoints,
+        FamilyErrorCodes.NoFamily => AppResources.Error_NoFamily,
+        FamilyErrorCodes.AlreadyInFamily => AppResources.Error_AlreadyInFamily,
+        FamilyErrorCodes.InvalidInviteCode => AppResources.Error_InvalidInviteCode,
+        FamilyErrorCodes.NotParent => AppResources.Error_NotParent,
+        FamilyErrorCodes.LastParent => AppResources.Error_LastParent,
+        FamilyErrorCodes.NotPending or FamilyErrorCodes.CompletionNotFound or FamilyErrorCodes.RedemptionNotFound => AppResources.Error_NotPending,
+        FamilyErrorCodes.MemberNotFound => AppResources.Error_MemberNotFound,
         _ => AppResources.Error_Generic,
     };
 

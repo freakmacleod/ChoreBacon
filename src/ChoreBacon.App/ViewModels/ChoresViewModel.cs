@@ -56,9 +56,10 @@ public partial class ChoresViewModel : ApiViewModel
                 var result = await _api.CompleteChoreAsync(item.Chore.Id, cancellationToken);
                 item.MarkCompleted(result.Completion.Status);
                 Balance = result.Balance;
-                StatusMessage = string.Join('\n',
-                    UnlockedLines(result.UnlockedAchievements).Prepend(
-                        string.Format(AppResources.Chores_PointsEarned, result.PointsEarned, item.Chore.Title)));
+                var headline = result.Completion.Status == CompletionStatus.Pending
+                    ? string.Format(AppResources.Chores_PendingApproval, result.PointsPending, item.Chore.Title)
+                    : string.Format(AppResources.Chores_PointsEarned, result.PointsEarned, item.Chore.Title);
+                StatusMessage = string.Join('\n', UnlockedLines(result.UnlockedAchievements).Prepend(headline));
             }, cancellationToken);
         }
         finally

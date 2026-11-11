@@ -40,6 +40,8 @@ public static class MauiProgram
         builder.Services.AddHttpClient<IAuthApi, AuthApiClient>(c => c.BaseAddress = apiConfig.BaseAddress);
         builder.Services.AddHttpClient<IChoreBaconApi, ChoreBaconApiClient>(c => c.BaseAddress = apiConfig.BaseAddress)
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
+        builder.Services.AddHttpClient<IFamilyApi, FamilyApiClient>(c => c.BaseAddress = apiConfig.BaseAddress)
+            .AddHttpMessageHandler<AuthenticatedHttpHandler>();
 
         // ── Services ──────────────────────────────────────────────────────────
         builder.Services.AddSingleton<IAuthService, AuthService>();
@@ -52,6 +54,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ChoresViewModel>();
         builder.Services.AddTransient<StoreViewModel>();
         builder.Services.AddTransient<AchievementsViewModel>();
+        builder.Services.AddTransient<FamilyViewModel>();
+        builder.Services.AddTransient<ApprovalsViewModel>();
+        builder.Services.AddTransient<FamilyCatalogViewModel>();
 
         // ── Views ─────────────────────────────────────────────────────────────
         builder.Services.AddTransient<LoginPage>();
@@ -59,6 +64,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ChoresPage>();
         builder.Services.AddTransient<StorePage>();
         builder.Services.AddTransient<AchievementsPage>();
+        builder.Services.AddTransient<FamilyPage>();
+        builder.Services.AddTransient<ApprovalsPage>();
+        builder.Services.AddTransient<FamilyCatalogPage>();
 
         // ── App Shell ─────────────────────────────────────────────────────────
         builder.Services.AddSingleton<AppShell>();

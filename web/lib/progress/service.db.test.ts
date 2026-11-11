@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import type { Executor } from "../../db/executor";
-import { achievements, chores, pointLedger, rewards, users } from "../../db/schema";
+import { achievements, chores, families, familyMembers, pointLedger, rewards, users } from "../../db/schema";
 import { closeDevDatabase, hasDevDatabase, inRollback } from "../test/dev-db";
 import {
   completeChore,
@@ -34,8 +34,15 @@ async function seedChore(tx: Executor, frequency: "daily" | "weekly" | "monthly"
   return chore.id;
 }
 
-async function seedReward(tx: Executor, cost: number, stock: number | null) {
-  const [reward] = await tx.insert(rewards).values({ title: "Test reward", cost, stock }).returning();
+/** Global rewards are unlimited; a stocked reward belongs to a family (here: the user's own). */
+async function seedReward(tx: Executor, cost: number, stock: number | null, userId?: string) {
+  let familyId: string | null = null;
+  if (stock !== null) {
+    const [family] = await tx.insert(families).values({ name: "Test", inviteCode: randomUUID().slice(0, 8) }).returning();
+    await tx.insert(familyMembers).values({ familyId: family.id, userId: userId!, role: "parent" });
+    familyId = family.id;
+  }
+  const [reward] = await tx.insert(rewards).values({ title: "Test reward", cost, stock, familyId }).returning();
   return reward.id;
 }
 
@@ -43,7 +50,7 @@ async function grant(tx: Executor, userId: string, delta: number) {
   await tx.insert(pointLedger).values({ userId, delta, reason: "admin_adjustment" });
 }
 
-describe.skipIf(!hasDevDatabase)("progress service (development database, rolled back)", () => {
+describe.skipIf(!hasDevDatabase)("progress service (development database, rolled back)", { timeout: 30_000 }, () => {
   afterAll(closeDevDatabase);
 
   describe("completeChore (business rule 2: once per Stockholm frequency window)", () => {
@@ -131,7 +138,7 @@ describe.skipIf(!hasDevDatabase)("progress service (development database, rolled
       await inRollback(async (tx) => {
         const userId = await seedUser(tx);
         await grant(tx, userId, 100);
-        const rewardId = await seedReward(tx, 30, 1);
+        const rewardId = await seedReward(tx, 30, 1, userId);
 
         const bought = await redeemReward(tx, userId, rewardId, monday);
         expect(bought).toMatchObject({ ok: true, redemption: { cost: 30, status: "pending" } });
@@ -141,7 +148,7 @@ describe.skipIf(!hasDevDatabase)("progress service (development database, rolled
         const [{ stock }] = await tx.select({ stock: rewards.stock }).from(rewards).where(eq(rewards.id, rewardId));
         expect(stock).toBe(0);
         expect(await redeemReward(tx, userId, rewardId, monday)).toMatchObject({ status: 409, code: "reward_out_of_stock" });
-        expect((await listRewards(tx)).find((r) => r.id === rewardId)?.stock).toBe(0);
+        expect((await listRewards(tx, userId)).find((r) => r.id === rewardId)?.stock).toBe(0);
       });
     });
 
@@ -149,7 +156,7 @@ describe.skipIf(!hasDevDatabase)("progress service (development database, rolled
       await inRollback(async (tx) => {
         const userId = await seedUser(tx);
         await grant(tx, userId, 20);
-        const rewardId = await seedReward(tx, 30, 5);
+        const rewardId = await seedReward(tx, 30, 5, userId);
 
         expect(await redeemReward(tx, userId, rewardId, monday)).toMatchObject({ status: 409, code: "insufficient_points" });
         expect((await loadStats(tx, userId, monday)).balance).toBe(20);

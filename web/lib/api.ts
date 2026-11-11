@@ -18,3 +18,13 @@ export const isUuid = (value: string) => z.uuid().safeParse(value).success;
 
 /** Maps a service failure to the standard error body. */
 export const failure = (f: { status: number; code: string; message: string }) => apiError(f.status, f.code, f.message);
+
+/** Service result → response: `onOk` for success, the standard error body for a failure. */
+export function respond<R extends { ok: true } | { ok: false; status: number; code: string; message: string }>(
+  result: R,
+  onOk: (value: Extract<R, { ok: true }>) => Response,
+): Response {
+  return result.ok ? onOk(result as Extract<R, { ok: true }>) : failure(result as { status: number; code: string; message: string });
+}
+
+export const noContent = () => new Response(null, { status: 204, headers: NO_STORE });
