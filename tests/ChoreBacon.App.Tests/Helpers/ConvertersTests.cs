@@ -34,4 +34,12 @@ public class ConvertersTests
     [InlineData(false, 0.4)]
     public void BoolToOpacity_dims_false(bool value, double expected) =>
         Assert.Equal(expected, Convert(new BoolToOpacityConverter(), value));
+
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(3, false)]
+    public void IntToBool_can_be_inverted_for_empty_list_labels(int count, bool expected)
+    {
+        Assert.Equal(expected, new IntToBoolConverter().Convert(count, typeof(bool), "invert", System.Globalization.CultureInfo.InvariantCulture));
+    }
 }

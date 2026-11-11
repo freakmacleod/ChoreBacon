@@ -40,10 +40,11 @@ public class BoolToCompletedColorConverter : IValueConverter
         => throw new NotImplementedException();
 }
 
+/// <summary>True for a positive number; with ConverterParameter "invert", true for zero (e.g. to show an empty-list label).</summary>
 public class IntToBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is int i && i > 0;
+        => (value is int i && i > 0) != (parameter as string == "invert");
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotImplementedException();

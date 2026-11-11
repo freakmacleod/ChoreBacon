@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             xmlns:family="clr-namespace:ChoreBacon.Contracts.Family;assembly=ChoreBacon.Contracts"
+             xmlns:strings="clr-namespace:ChoreBacon.Resources.Strings"
+             x:Class="ChoreBacon.Views.ApprovalsPage"
+             x:DataType="vm:ApprovalsViewModel"
+             Title="{Binding Title}">
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="12">
+                <Label Text="{Binding StatusMessage}"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
+                       TextColor="{AppThemeBinding Light=#388E3C, Dark=#81C784}" HorizontalTextAlignment="Center" />
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                       TextColor="#F44336" HorizontalTextAlignment="Center" />
+
+                <Label Text="{x:Static strings:AppResources.Approvals_Completions}" FontSize="18" FontAttributes="Bold" />
+                <Label Text="{x:Static strings:AppResources.Approvals_Empty}" TextColor="Gray"
+                       IsVisible="{Binding Completions.Count, Converter={StaticResource IntToBoolConverter}, ConverterParameter=invert}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Completions}" Spacing="8">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="family:PendingCompletionDto">
+                            <Border Padding="12" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                    <VerticalStackLayout VerticalOptions="Center">
+                                        <Label Text="{Binding ChoreTitle}" FontAttributes="Bold" />
+                                        <Label FontSize="12" TextColor="Gray">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding DisplayName}" />
+                                                    <Span Text=" · " />
+                                                    <Span Text="{Binding Points, StringFormat={x:Static strings:AppResources.Common_Points}}" />
+                                                    <Span Text=" · " />
+                                                    <Span Text="{Binding LocalDate}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="1" Text="{x:Static strings:AppResources.Approvals_Reject}" FontSize="12" HeightRequest="36"
+                                            BackgroundColor="Transparent" TextColor="#F44336" BorderColor="#F44336" BorderWidth="1" CornerRadius="8"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ApprovalsViewModel}}, Path=RejectCommand, x:DataType=vm:ApprovalsViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Grid.Column="2" Text="{x:Static strings:AppResources.Approvals_Approve}" FontSize="12" HeightRequest="36"
+                                            BackgroundColor="{AppThemeBinding Light=#4CAF50, Dark=#388E3C}" TextColor="White" CornerRadius="8"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ApprovalsViewModel}}, Path=ApproveCommand, x:DataType=vm:ApprovalsViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="{x:Static strings:AppResources.Approvals_Redemptions}" FontSize="18" FontAttributes="Bold" Margin="0,12,0,0" />
+                <Label Text="{x:Static strings:AppResources.Approvals_NoRedemptions}" TextColor="Gray"
+                       IsVisible="{Binding Redemptions.Count, Converter={StaticResource IntToBoolConverter}, ConverterParameter=invert}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Redemptions}" Spacing="8">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="family:PendingRedemptionDto">
+                            <Border Padding="12" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <VerticalStackLayout VerticalOptions="Center">
+                                        <Label Text="{Binding RewardTitle}" FontAttributes="Bold" />
+                                        <Label FontSize="12" TextColor="Gray">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding DisplayName}" />
+                                                    <Span Text=" · " />
+                                                    <Span Text="{Binding Cost, StringFormat={x:Static strings:AppResources.Common_Points}}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                    <Button Grid.Column="1" Text="{x:Static strings:AppResources.Approvals_Fulfil}" FontSize="12" HeightRequest="36"
+                                            BackgroundColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" TextColor="White" CornerRadius="8"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ApprovalsViewModel}}, Path=FulfilCommand, x:DataType=vm:ApprovalsViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

@@ -187,4 +187,193 @@
   <data name="Error_InsufficientPoints" xml:space="preserve">
     <value>Du har inte tillräckligt med poäng.</value>
   </data>
+  <data name="Tab_Family" xml:space="preserve">
+    <value>Familj</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Spara</value>
+  </data>
+  <data name="Family_NoFamilyTitle" xml:space="preserve">
+    <value>Du är inte med i någon familj</value>
+  </data>
+  <data name="Family_NoFamilyText" xml:space="preserve">
+    <value>Skapa en familj och bjud in de andra, eller gå med i en familj med en inbjudningskod.</value>
+  </data>
+  <data name="Family_Create" xml:space="preserve">
+    <value>Skapa familj</value>
+  </data>
+  <data name="Family_Join" xml:space="preserve">
+    <value>Gå med i familj</value>
+  </data>
+  <data name="Family_CreatePrompt" xml:space="preserve">
+    <value>Vad ska familjen heta?</value>
+  </data>
+  <data name="Family_JoinPrompt" xml:space="preserve">
+    <value>Skriv inbjudningskoden (t.ex. K7PQ-4XMR).</value>
+  </data>
+  <data name="Family_InviteCode" xml:space="preserve">
+    <value>Inbjudningskod: {0}</value>
+  </data>
+  <data name="Family_InviteHint" xml:space="preserve">
+    <value>Den som går med blir barn. Du kan göra dem till förälder.</value>
+  </data>
+  <data name="Family_NewCode" xml:space="preserve">
+    <value>Ny kod</value>
+  </data>
+  <data name="Family_NewCodeConfirm" xml:space="preserve">
+    <value>Den gamla koden slutar fungera. Fortsätt?</value>
+  </data>
+  <data name="Family_ApprovalOn" xml:space="preserve">
+    <value>Barnens sysslor kräver godkännande: På</value>
+  </data>
+  <data name="Family_ApprovalOff" xml:space="preserve">
+    <value>Barnens sysslor kräver godkännande: Av</value>
+  </data>
+  <data name="Family_Members" xml:space="preserve">
+    <value>Medlemmar</value>
+  </data>
+  <data name="Family_RoleParent" xml:space="preserve">
+    <value>Förälder</value>
+  </data>
+  <data name="Family_RoleChild" xml:space="preserve">
+    <value>Barn</value>
+  </data>
+  <data name="Family_MakeParent" xml:space="preserve">
+    <value>Gör till förälder</value>
+  </data>
+  <data name="Family_MakeChild" xml:space="preserve">
+    <value>Gör till barn</value>
+  </data>
+  <data name="Family_Remove" xml:space="preserve">
+    <value>Ta bort</value>
+  </data>
+  <data name="Family_RemoveConfirm" xml:space="preserve">
+    <value>Ta bort {0} från familjen?</value>
+  </data>
+  <data name="Family_Leave" xml:space="preserve">
+    <value>Lämna familjen</value>
+  </data>
+  <data name="Family_LeaveConfirm" xml:space="preserve">
+    <value>Vill du lämna {0}? Dina poäng finns kvar.</value>
+  </data>
+  <data name="Family_Approvals" xml:space="preserve">
+    <value>Att godkänna</value>
+  </data>
+  <data name="Family_Catalog" xml:space="preserve">
+    <value>Familjens sysslor och belöningar</value>
+  </data>
+  <data name="Approvals_Completions" xml:space="preserve">
+    <value>Gjorda sysslor</value>
+  </data>
+  <data name="Approvals_Redemptions" xml:space="preserve">
+    <value>Att lämna ut</value>
+  </data>
+  <data name="Approvals_Empty" xml:space="preserve">
+    <value>Inget att godkänna just nu.</value>
+  </data>
+  <data name="Approvals_NoRedemptions" xml:space="preserve">
+    <value>Inget att lämna ut.</value>
+  </data>
+  <data name="Approvals_Approve" xml:space="preserve">
+    <value>Godkänn</value>
+  </data>
+  <data name="Approvals_Reject" xml:space="preserve">
+    <value>Neka</value>
+  </data>
+  <data name="Approvals_Fulfil" xml:space="preserve">
+    <value>Utlämnad</value>
+  </data>
+  <data name="Approvals_Approved" xml:space="preserve">
+    <value>Godkänt: {0} fick {1} poäng.</value>
+  </data>
+  <data name="Approvals_Rejected" xml:space="preserve">
+    <value>Nekat: {0}.</value>
+  </data>
+  <data name="Approvals_Fulfilled" xml:space="preserve">
+    <value>Utlämnat: {0}.</value>
+  </data>
+  <data name="Catalog_Chores" xml:space="preserve">
+    <value>Sysslor</value>
+  </data>
+  <data name="Catalog_Rewards" xml:space="preserve">
+    <value>Belöningar</value>
+  </data>
+  <data name="Catalog_Active" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="Catalog_FamilyOnly" xml:space="preserve">
+    <value>Familjens egen</value>
+  </data>
+  <data name="Catalog_PointsOverride" xml:space="preserve">
+    <value>Poäng (tomt = {0})</value>
+  </data>
+  <data name="Catalog_CostOverride" xml:space="preserve">
+    <value>Pris (tomt = {0})</value>
+  </data>
+  <data name="Catalog_Stock" xml:space="preserve">
+    <value>Lager (tomt = obegränsat)</value>
+  </data>
+  <data name="Catalog_Saved" xml:space="preserve">
+    <value>Sparat.</value>
+  </data>
+  <data name="Catalog_NewChore" xml:space="preserve">
+    <value>Ny syssla för familjen</value>
+  </data>
+  <data name="Catalog_NewReward" xml:space="preserve">
+    <value>Ny belöning för familjen</value>
+  </data>
+  <data name="Catalog_NamePlaceholder" xml:space="preserve">
+    <value>Namn</value>
+  </data>
+  <data name="Catalog_PointsPlaceholder" xml:space="preserve">
+    <value>Poäng</value>
+  </data>
+  <data name="Catalog_CostPlaceholder" xml:space="preserve">
+    <value>Pris</value>
+  </data>
+  <data name="Catalog_Add" xml:space="preserve">
+    <value>Lägg till</value>
+  </data>
+  <data name="Catalog_Added" xml:space="preserve">
+    <value>Tillagd: {0}</value>
+  </data>
+  <data name="Catalog_InvalidNumber" xml:space="preserve">
+    <value>Ange ett heltal, minst 1.</value>
+  </data>
+  <data name="Catalog_InvalidStock" xml:space="preserve">
+    <value>Lager måste vara ett heltal, 0 eller mer.</value>
+  </data>
+  <data name="Catalog_TitleRequired" xml:space="preserve">
+    <value>Ange ett namn.</value>
+  </data>
+  <data name="Chores_PendingApproval" xml:space="preserve">
+    <value>Väntar på godkännande: +{0} poäng för {1}.</value>
+  </data>
+  <data name="Error_NoFamily" xml:space="preserve">
+    <value>Du är inte med i någon familj.</value>
+  </data>
+  <data name="Error_AlreadyInFamily" xml:space="preserve">
+    <value>Du är redan med i en familj.</value>
+  </data>
+  <data name="Error_InvalidInviteCode" xml:space="preserve">
+    <value>Ingen familj har den koden.</value>
+  </data>
+  <data name="Error_NotParent" xml:space="preserve">
+    <value>Bara föräldrar kan göra det.</value>
+  </data>
+  <data name="Error_LastParent" xml:space="preserve">
+    <value>Familjen behöver minst en förälder. Gör någon annan till förälder först.</value>
+  </data>
+  <data name="Error_NotPending" xml:space="preserve">
+    <value>Det är redan hanterat.</value>
+  </data>
+  <data name="Error_MemberNotFound" xml:space="preserve">
+    <value>Personen finns inte i familjen.</value>
+  </data>
 </root>

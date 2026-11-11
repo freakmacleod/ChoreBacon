@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             xmlns:strings="clr-namespace:ChoreBacon.Resources.Strings"
+             x:Class="ChoreBacon.Views.FamilyPage"
+             x:DataType="vm:FamilyViewModel"
+             Title="{Binding Title}">
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                       TextColor="#F44336" FontSize="14" HorizontalTextAlignment="Center" />
+
+                <!-- Not in a family -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding HasNoFamily}">
+                    <Label Text="{x:Static strings:AppResources.Family_NoFamilyTitle}" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="{x:Static strings:AppResources.Family_NoFamilyText}" FontSize="14" TextColor="Gray" />
+                    <Button Text="{x:Static strings:AppResources.Family_Create}" Command="{Binding CreateCommand}"
+                            BackgroundColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" TextColor="White" CornerRadius="10" />
+                    <Button Text="{x:Static strings:AppResources.Family_Join}" Command="{Binding JoinCommand}"
+                            BackgroundColor="Transparent" BorderColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" BorderWidth="1"
+                            TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" CornerRadius="10" />
+                </VerticalStackLayout>
+
+                <!-- In a family -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding HasFamily}">
+                    <Label Text="{Binding Name}" FontSize="24" FontAttributes="Bold" />
+
+                    <!-- Parent tools -->
+                    <Border IsVisible="{Binding IsParent}" StrokeThickness="0" Padding="16"
+                            BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2D1F0A}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding InviteCodeText}" FontSize="18" FontAttributes="Bold" />
+                            <Label Text="{x:Static strings:AppResources.Family_InviteHint}" FontSize="12" TextColor="Gray" />
+                            <Button Text="{x:Static strings:AppResources.Family_NewCode}" Command="{Binding NewInviteCodeCommand}"
+                                    HorizontalOptions="Start" HeightRequest="36" FontSize="13" CornerRadius="8" />
+                            <Button Text="{Binding ApprovalText}" Command="{Binding ToggleApprovalCommand}"
+                                    HeightRequest="40" FontSize="13" CornerRadius="8" />
+                            <Button Text="{x:Static strings:AppResources.Family_Approvals}" Command="{Binding OpenApprovalsCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" TextColor="White" CornerRadius="8" />
+                            <Button Text="{x:Static strings:AppResources.Family_Catalog}" Command="{Binding OpenCatalogCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#4CAF50, Dark=#388E3C}" TextColor="White" CornerRadius="8" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="{x:Static strings:AppResources.Family_Members}" FontSize="18" FontAttributes="Bold" Margin="0,8,0,0" />
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Members}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FamilyMemberItemViewModel">
+                                <Border Padding="12" StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
+                                    <VerticalStackLayout Spacing="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding Member.DisplayName}" FontSize="16" FontAttributes="Bold" />
+                                                <Label Text="{Binding RoleText}" FontSize="12" TextColor="Gray" />
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="1" VerticalOptions="Center"
+                                                   Text="{Binding Member.Balance, StringFormat={x:Static strings:AppResources.Common_Points}}"
+                                                   TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" />
+                                        </Grid>
+                                        <HorizontalStackLayout Spacing="8" IsVisible="{Binding CanManage}">
+                                            <Button Text="{Binding ChangeRoleText}" FontSize="12" HeightRequest="34" CornerRadius="8"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FamilyViewModel}}, Path=ChangeRoleCommand, x:DataType=vm:FamilyViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                            <Button Text="{x:Static strings:AppResources.Family_Remove}" FontSize="12" HeightRequest="34" CornerRadius="8"
+                                                    BackgroundColor="Transparent" TextColor="#F44336" BorderColor="#F44336" BorderWidth="1"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FamilyViewModel}}, Path=RemoveMemberCommand, x:DataType=vm:FamilyViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Button Text="{x:Static strings:AppResources.Family_Leave}" Command="{Binding LeaveCommand}" Margin="0,16,0,0"
+                            BackgroundColor="Transparent" TextColor="#F44336" BorderColor="#F44336" BorderWidth="1" CornerRadius="10" />
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>
