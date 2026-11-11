@@ -37,7 +37,7 @@ npm run dev
 | Method | Path | |
 |--------|------|-|
 | GET | `/api/v1/health` | `{ status, db, region }`; 503 if the DB is unreachable |
-| GET | `/api/v1/auth/{google\|facebook}/start` | Opened by the app's WebAuthenticator; redirects to the provider |
+| GET | `/api/v1/auth/{google\|facebook}/start` | Opened by the app's WebAuthenticator; redirects to the provider. 503 `provider_not_configured` where the provider has no credentials (Preview) |
 | GET | `/api/v1/auth/{google\|facebook}/callback` | Provider redirect target; ends at `chorebacon://auth#access_token=…&refresh_token=…&expires_in=…` (or `#error=…`) |
 | POST | `/api/v1/auth/refresh` | `{ refresh_token }` → new token pair (rotation; reuse revokes the session) |
 | POST | `/api/v1/auth/logout` | `{ refresh_token }` → 204, revokes the session |

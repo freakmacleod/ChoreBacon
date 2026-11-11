@@ -13,9 +13,16 @@ type Provider = {
   fetchProfile(params: { code: string; redirectUri: string }): Promise<ProviderProfile>;
 };
 
+/** A provider's credentials are missing in this environment (e.g. Preview, which uses dev login). */
+export class ProviderNotConfiguredError extends Error {
+  constructor(readonly variable: string) {
+    super(`${variable} is not configured`);
+  }
+}
+
 function requireEnv(name: string): string {
   const value = process.env[name];
-  if (!value) throw new Error(`${name} is not configured`);
+  if (!value) throw new ProviderNotConfiguredError(name);
   return value;
 }
 
