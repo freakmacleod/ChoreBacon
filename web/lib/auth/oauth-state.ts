@@ -1,46 +1,32 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { seal, unseal } from "./seal";
 
 // CSRF protection for the OAuth round trip: /start sets a signed, short-lived cookie holding the
 // state value; /callback accepts the provider's response only if its `state` matches the cookie.
+// The cookie also remembers who started the sign-in: the app (tokens via chorebacon://auth) or the
+// admin web pages (session cookie).
 
 export const STATE_COOKIE = "cb_oauth_state";
 export const STATE_TTL_SECONDS = 10 * 60;
+const PURPOSE = "oauth-state";
 
-type StatePayload = { state: string; provider: string; exp: number };
+export type AuthClient = "app" | "admin";
+export const isAuthClient = (value: string | null): value is AuthClient => value === "app" || value === "admin";
 
-const mac = (data: string, key: string) => createHmac("sha256", key).update(`oauth-state:${data}`).digest("base64url");
+type StatePayload = { state: string; provider: string; client: AuthClient };
 
-export function sealState(payload: Omit<StatePayload, "exp">, key: string, now: Date): string {
-  const body = Buffer.from(
-    JSON.stringify({ ...payload, exp: Math.floor(now.getTime() / 1000) + STATE_TTL_SECONDS }),
-  ).toString("base64url");
-  return `${body}.${mac(body, key)}`;
+export function sealState(payload: StatePayload, key: string, now: Date): string {
+  return seal(PURPOSE, payload, STATE_TTL_SECONDS, key, now);
 }
 
-/** True only if the cookie is authentic, unexpired, for this provider, and carries this state. */
-export function verifyState(
+/** The client that started the sign-in, if the cookie is authentic, unexpired, for this provider and carries this state. */
+export function readState(
   cookie: string | undefined,
   expected: { state: string | null; provider: string },
   key: string,
   now: Date,
-): boolean {
-  if (!cookie || !expected.state) return false;
-  const [body, signature] = cookie.split(".");
-  if (!body || !signature) return false;
-
-  const good = Buffer.from(mac(body, key));
-  const given = Buffer.from(signature);
-  if (good.length !== given.length || !timingSafeEqual(good, given)) return false;
-
-  let payload: StatePayload;
-  try {
-    payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
-  } catch {
-    return false;
-  }
-  return (
-    payload.provider === expected.provider &&
-    payload.state === expected.state &&
-    payload.exp > Math.floor(now.getTime() / 1000)
-  );
+): AuthClient | null {
+  if (!expected.state) return null;
+  const payload = unseal<StatePayload>(PURPOSE, cookie, key, now);
+  if (!payload || payload.provider !== expected.provider || payload.state !== expected.state) return null;
+  return isAuthClient(payload.client) ? payload.client : null;
 }

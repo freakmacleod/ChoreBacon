@@ -1,12 +1,14 @@
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_COOKIE, adminCookieOptions, sealAdminSession } from "@/lib/auth/admin-session";
 import { jwtSigningKey, publicOrigin } from "@/lib/auth/config";
-import { STATE_COOKIE, verifyState } from "@/lib/auth/oauth-state";
+import { STATE_COOKIE, readState } from "@/lib/auth/oauth-state";
 import { type ProviderId, isProvider, providers } from "@/lib/auth/providers";
-import { appRedirect } from "@/lib/auth/responses";
+import { adminLoginRedirect, appRedirect } from "@/lib/auth/responses";
 import { startSession, upsertUser } from "@/lib/auth/session";
 import { apiError } from "@/lib/http";
 
-// The provider redirects here; on success the app receives its own tokens via chorebacon://auth.
+// The provider redirects here. The app receives its own tokens via chorebacon://auth; the admin web
+// pages get a session cookie, and only users with role admin get one.
 export async function GET(request: NextRequest, ctx: RouteContext<"/api/v1/auth/[provider]/callback">) {
   const { provider } = await ctx.params;
   if (!isProvider(provider)) return apiError(404, "unknown_provider", `Unknown provider: ${provider}`);
@@ -19,29 +21,45 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/v1/auth/
 
 async function complete(request: NextRequest, provider: ProviderId) {
   const params = request.nextUrl.searchParams;
-  const stateCookie = request.cookies.get(STATE_COOKIE)?.value;
+  const origin = publicOrigin(request);
+  const client = readState(
+    request.cookies.get(STATE_COOKIE)?.value,
+    { state: params.get("state"), provider },
+    jwtSigningKey(),
+    new Date(),
+  );
+  // Without a valid state we cannot know who asked, so the app (the main client) gets the error.
+  if (!client) return appRedirect({ error: "invalid_state" });
 
-  if (!verifyState(stateCookie, { state: params.get("state"), provider }, jwtSigningKey(), new Date())) {
-    return appRedirect({ error: "invalid_state" });
-  }
+  const fail = (error: string) => (client === "admin" ? adminLoginRedirect(origin, error) : appRedirect({ error }));
   // The user pressed cancel / denied consent on the provider's page.
-  if (params.has("error")) return appRedirect({ error: "access_denied" });
-
+  if (params.has("error")) return fail("access_denied");
   const code = params.get("code");
-  if (!code) return appRedirect({ error: "missing_code" });
+  if (!code) return fail("missing_code");
 
   try {
-    const redirectUri = `${publicOrigin(request)}/api/v1/auth/${provider}/callback`;
+    const redirectUri = `${origin}/api/v1/auth/${provider}/callback`;
     const profile = await providers[provider].fetchProfile({ code, redirectUri });
     const user = await upsertUser({ provider, ...profile });
-    const tokens = await startSession(user);
-    return appRedirect({
-      access_token: tokens.accessToken,
-      refresh_token: tokens.refreshToken,
-      expires_in: String(tokens.expiresIn),
-    });
+    return client === "admin" ? adminSignIn(origin, user) : await appSignIn(user);
   } catch (error) {
     console.error(`OAuth callback failed for ${provider}`, error);
-    return appRedirect({ error: "provider_error" });
+    return fail("provider_error");
   }
+}
+
+async function appSignIn(user: { id: string; role: "user" | "admin" }) {
+  const tokens = await startSession(user);
+  return appRedirect({
+    access_token: tokens.accessToken,
+    refresh_token: tokens.refreshToken,
+    expires_in: String(tokens.expiresIn),
+  });
+}
+
+function adminSignIn(origin: string, user: { id: string; role: "user" | "admin" }) {
+  if (user.role !== "admin") return adminLoginRedirect(origin, "not_admin");
+  const response = NextResponse.redirect(`${origin}/admin`, 302);
+  response.cookies.set(ADMIN_COOKIE, sealAdminSession(user.id, jwtSigningKey(), new Date()), adminCookieOptions(origin.startsWith("https://")));
+  return response;
 }

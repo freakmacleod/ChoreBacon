@@ -18,3 +18,8 @@ export function appRedirect(fragment: Record<string, string>) {
   const url = `${APP_CALLBACK_URL}#${new URLSearchParams(fragment).toString()}`;
   return new NextResponse(null, { status: 302, headers: { location: url, "cache-control": "no-store" } });
 }
+
+/** Sends an admin sign-in back to the admin login page with an error code. */
+export function adminLoginRedirect(origin: string, error: string) {
+  return NextResponse.redirect(`${origin}/admin/login?error=${encodeURIComponent(error)}`, 302);
+}
