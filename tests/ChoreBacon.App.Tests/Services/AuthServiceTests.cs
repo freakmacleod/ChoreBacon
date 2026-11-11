@@ -15,7 +15,6 @@ public class AuthServiceTests
     private readonly InMemoryTokenStore _store = new();
     private readonly FakeAuthApi _authApi = new();
     private readonly FakeChoreBaconApi _api = new() { OnGetMe = () => Task.FromResult(Me) };
-    private readonly FakeDatabaseService _db = new();
     private readonly ApiConfig _config = new(new Uri("https://api.test"));
     private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
 
@@ -24,11 +23,11 @@ public class AuthServiceTests
         var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 10, 12, 0, 0, TimeSpan.Zero));
         return new AuthService(
             web ?? new FakeWebAuthenticator(_ => throw new InvalidOperationException("browser not expected")),
-            _authApi, _api, new TokenManager(_store, _authApi, time), _config, _db, time);
+            _authApi, _api, new TokenManager(_store, _authApi, time), _config);
     }
 
     [Fact]
-    public async Task Google_sign_in_stores_tokens_and_mirrors_the_user_locally()
+    public async Task Google_sign_in_stores_tokens_and_loads_the_profile_from_the_API()
     {
         var web = new FakeWebAuthenticator(_ => FakeWebAuthenticator.Callback("access_token=a.b.c&refresh_token=r1&expires_in=900"));
         var auth = CreateService(web);
@@ -39,12 +38,12 @@ public class AuthServiceTests
         Assert.Equal(new Uri("chorebacon://auth"), web.LastOptions.CallbackUrl);
         Assert.Equal("r1", _store.Tokens!.RefreshToken);
         Assert.NotNull(user);
+        Assert.Equal(Me, user);
         Assert.Same(user, auth.CurrentUser);
-        Assert.Equal((Me.Id.ToString(), "google", "Anna Andersson"), (user.ExternalId, user.Provider, user.DisplayName));
     }
 
     [Fact]
-    public async Task Returning_user_reuses_the_local_row_and_gets_a_new_session()
+    public async Task Returning_user_gets_a_new_session()
     {
         // Business rule 6: returning users get fresh tokens too, not only new users.
         var callbacks = new Queue<string>(["access_token=a1&refresh_token=r1&expires_in=900", "access_token=a2&refresh_token=r2&expires_in=900"]);
@@ -55,7 +54,6 @@ public class AuthServiceTests
         var second = await auth.LoginWithGoogleAsync(_ct);
 
         Assert.Equal(first!.Id, second!.Id);
-        Assert.Single(_db.Users);
         Assert.Equal("r2", _store.Tokens!.RefreshToken);
     }
 
@@ -132,10 +130,4 @@ public class AuthServiceTests
         Assert.False(auth.IsLoggedIn);
         Assert.Equal(["r"], _authApi.LoggedOut);
     }
-}
-
-internal sealed class FakeChoreBaconApi : IChoreBaconApi
-{
-    public Func<Task<MeResponse>> OnGetMe { get; set; } = () => throw new NotSupportedException();
-    public Task<MeResponse> GetMeAsync(CancellationToken cancellationToken) => OnGetMe();
 }

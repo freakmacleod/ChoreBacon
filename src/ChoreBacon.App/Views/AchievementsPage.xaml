@@ -2,44 +2,49 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             xmlns:strings="clr-namespace:ChoreBacon.Resources.Strings"
              x:Class="ChoreBacon.Views.AchievementsPage"
              x:DataType="vm:AchievementsViewModel"
              Title="{Binding Title}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
 
-        <!-- Progress Header -->
-        <Frame Grid.Row="0" BackgroundColor="{AppThemeBinding Light=#9C27B0, Dark=#6A0080}"
-               Padding="16,12" CornerRadius="0" BorderColor="Transparent">
+        <!-- Progress header -->
+        <Border Grid.Row="0" StrokeThickness="0" Padding="16,12"
+                BackgroundColor="{AppThemeBinding Light=#9C27B0, Dark=#6A0080}">
             <Label FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="🏆 " />
-                        <Span Text="{Binding UnlockedCount}" FontAttributes="Bold" />
-                        <Span Text=" / " />
-                        <Span Text="{Binding TotalCount}" />
-                        <Span Text=" Achievements Unlocked" />
-                    </FormattedString>
-                </Label.FormattedText>
+                <Label.Text>
+                    <MultiBinding StringFormat="{x:Static strings:AppResources.Achievements_Progress}">
+                        <Binding Path="UnlockedCount" />
+                        <Binding Path="TotalCount" />
+                    </MultiBinding>
+                </Label.Text>
             </Label>
-        </Frame>
+        </Border>
 
-        <!-- Achievements List -->
-        <RefreshView Grid.Row="1" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+        <Label Grid.Row="1" Text="{Binding ErrorMessage}" Padding="16,8"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+               TextColor="#F44336" FontSize="14" HorizontalTextAlignment="Center" />
+
+        <!-- Achievements list -->
+        <RefreshView Grid.Row="2" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
             <CollectionView ItemsSource="{Binding Achievements}"
-                            EmptyView="No achievements found."
+                            EmptyView="{x:Static strings:AppResources.Achievements_Empty}"
                             Margin="0,8">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:AchievementItemViewModel">
-                        <Frame Margin="16,4" Padding="16" CornerRadius="12"
-                               BorderColor="{Binding RarityColor}"
-                               BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+                        <Border Margin="16,4" Padding="16" StrokeThickness="1"
+                                Stroke="{Binding RarityColor}"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
                             <Grid ColumnDefinitions="56,*" ColumnSpacing="12">
                                 <!-- Icon with lock overlay -->
                                 <Grid Grid.Column="0" WidthRequest="56" HeightRequest="56">
                                     <Ellipse WidthRequest="56" HeightRequest="56"
                                              Fill="{Binding RarityColor}" Opacity="0.2" />
-                                    <Label Text="{Binding Achievement.IconName}"
+                                    <Label Text="{Binding Achievement.Icon, Converter={StaticResource IconKeyConverter}}"
                                            FontSize="28" HorizontalOptions="Center" VerticalOptions="Center" />
                                     <Label Text="🔒" FontSize="18"
                                            IsVisible="{Binding IsUnlocked, Converter={StaticResource InverseBoolConverter}}"
@@ -47,18 +52,18 @@
                                 </Grid>
                                 <!-- Details -->
                                 <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                    <Label Text="{Binding Achievement.Name}"
+                                    <Label Text="{Binding Achievement.Title}"
                                            FontSize="16" FontAttributes="Bold"
                                            Opacity="{Binding IsUnlocked, Converter={StaticResource BoolToOpacityConverter}}" />
                                     <Label Text="{Binding Achievement.Description}"
                                            FontSize="13" TextColor="Gray" />
-                                    <Label Text="{Binding Achievement.BonusPoints, StringFormat='+{0} bonus pts'}"
+                                    <Label Text="{Binding Achievement.BonusPoints, StringFormat={x:Static strings:AppResources.Achievements_Bonus}}"
                                            FontSize="12"
                                            TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}"
                                            IsVisible="{Binding Achievement.BonusPoints, Converter={StaticResource IntToBoolConverter}}" />
                                 </VerticalStackLayout>
                             </Grid>
-                        </Frame>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

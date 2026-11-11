@@ -1,6 +1,5 @@
 using System.Net;
 using ChoreBacon.Contracts.Auth;
-using ChoreBacon.Models;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
@@ -12,29 +11,23 @@ namespace ChoreBacon.Services;
 /// the backend, which answers with its own tokens on <c>chorebacon://auth</c>. Tokens live only in
 /// SecureStorage (via <see cref="TokenManager"/>).
 /// </summary>
-/// <remarks>
-/// Until the API replaces SQLite (backlog item 5), the signed-in API user is mirrored into the local
-/// Users table so the existing chore/store/achievement services keep working.
-/// </remarks>
 public class AuthService(
     IWebAuthenticator webAuthenticator,
     IAuthApi authApi,
     IChoreBaconApi api,
     TokenManager tokens,
-    ApiConfig config,
-    IDatabaseService db,
-    TimeProvider time) : IAuthService
+    ApiConfig config) : IAuthService
 {
-    public User? CurrentUser { get; private set; }
+    public MeResponse? CurrentUser { get; private set; }
     public bool IsLoggedIn => CurrentUser is not null;
 
-    public Task<User?> LoginWithGoogleAsync(CancellationToken cancellationToken = default) =>
+    public Task<MeResponse?> LoginWithGoogleAsync(CancellationToken cancellationToken = default) =>
         LoginWithProviderAsync("google", cancellationToken);
 
-    public Task<User?> LoginWithFacebookAsync(CancellationToken cancellationToken = default) =>
+    public Task<MeResponse?> LoginWithFacebookAsync(CancellationToken cancellationToken = default) =>
         LoginWithProviderAsync("facebook", cancellationToken);
 
-    private async Task<User?> LoginWithProviderAsync(string provider, CancellationToken cancellationToken)
+    private async Task<MeResponse?> LoginWithProviderAsync(string provider, CancellationToken cancellationToken)
     {
         WebAuthenticatorResult result;
         try
@@ -66,7 +59,7 @@ public class AuthService(
         return await CompleteSignInAsync(cancellationToken);
     }
 
-    public async Task<User> LoginAsDevAsync(CancellationToken cancellationToken = default)
+    public async Task<MeResponse> LoginAsDevAsync(CancellationToken cancellationToken = default)
     {
         TokenResponse issued;
         try
@@ -127,7 +120,7 @@ public class AuthService(
         }
     }
 
-    private async Task<User> CompleteSignInAsync(CancellationToken cancellationToken)
+    private async Task<MeResponse> CompleteSignInAsync(CancellationToken cancellationToken)
     {
         MeResponse me;
         try
@@ -145,22 +138,7 @@ public class AuthService(
             throw new AuthException(ex.Code, ex);
         }
 
-        CurrentUser = await MirrorLocalUserAsync(me);
-        return CurrentUser;
-    }
-
-    private async Task<User> MirrorLocalUserAsync(MeResponse me)
-    {
-        var externalId = me.Id.ToString();
-        var user = await db.GetUserByExternalIdAsync(externalId, me.Provider) ?? new User
-        {
-            ExternalId = externalId,
-            Provider = me.Provider,
-        };
-        user.DisplayName = me.DisplayName;
-        user.Email = me.Email ?? string.Empty;
-        user.LastLoginAt = time.GetUtcNow().UtcDateTime;
-        await db.SaveUserAsync(user);
-        return user;
+        CurrentUser = me;
+        return me;
     }
 }

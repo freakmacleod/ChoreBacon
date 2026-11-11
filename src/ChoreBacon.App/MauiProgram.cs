@@ -2,6 +2,7 @@ using ChoreBacon.Services;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
+using ChoreBacon.Services.Ui;
 using ChoreBacon.ViewModels;
 using ChoreBacon.Views;
 using CommunityToolkit.Maui;
@@ -41,11 +42,9 @@ public static class MauiProgram
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
 
         // ── Services ──────────────────────────────────────────────────────────
-        builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
         builder.Services.AddSingleton<IAuthService, AuthService>();
-        builder.Services.AddSingleton<IChoreService, ChoreService>();
-        builder.Services.AddSingleton<IAchievementService, AchievementService>();
-        builder.Services.AddSingleton<IStoreService, StoreService>();
+        builder.Services.AddSingleton<INavigator, ShellNavigator>();
+        builder.Services.AddSingleton<IDialogs, ShellDialogs>();
 
         // ── ViewModels ────────────────────────────────────────────────────────
         builder.Services.AddTransient<LoginViewModel>();

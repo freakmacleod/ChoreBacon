@@ -15,6 +15,12 @@ export function stockholmDate(instant: Date): string {
   return dateParts.format(instant);
 }
 
+/** The calendar date `days` after (or before, if negative) `localDate`. Pure calendar arithmetic. */
+export function addDays(localDate: string, days: number): string {
+  const [y, m, d] = localDate.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
 /** ISO 8601 week (Monday start) of a calendar date, e.g. "2026-W46". */
 export function isoWeek(localDate: string): string {
   const [y, m, d] = localDate.split("-").map(Number);

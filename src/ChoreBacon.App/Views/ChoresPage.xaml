@@ -2,60 +2,71 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             xmlns:strings="clr-namespace:ChoreBacon.Resources.Strings"
              x:Class="ChoreBacon.Views.ChoresPage"
              x:DataType="vm:ChoresViewModel"
              Title="{Binding Title}">
 
     <Grid RowDefinitions="Auto,Auto,*">
 
-        <!-- Points Header -->
-        <Frame Grid.Row="0" BackgroundColor="{AppThemeBinding Light=#FF6B35, Dark=#CC5522}"
-               Padding="16,12" CornerRadius="0" BorderColor="Transparent">
-            <Label Text="{Binding UserPoints, StringFormat='⭐ {0} Points'}"
+        <!-- Points header -->
+        <Border Grid.Row="0" StrokeThickness="0" Padding="16,12"
+                BackgroundColor="{AppThemeBinding Light=#FF6B35, Dark=#CC5522}">
+            <Label Text="{Binding Balance, StringFormat={x:Static strings:AppResources.Chores_Balance}}"
                    FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
-        </Frame>
+        </Border>
 
-        <!-- Status Message -->
-        <Label Grid.Row="1"
-               Text="{Binding StatusMessage}"
-               IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
-               Padding="16,8"
-               TextColor="{AppThemeBinding Light=#388E3C, Dark=#81C784}"
-               FontSize="14" HorizontalTextAlignment="Center" />
+        <!-- Status and error -->
+        <VerticalStackLayout Grid.Row="1" Padding="16,8" Spacing="4">
+            <Label Text="{Binding StatusMessage}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
+                   TextColor="{AppThemeBinding Light=#388E3C, Dark=#81C784}"
+                   FontSize="14" HorizontalTextAlignment="Center" />
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+                   TextColor="#F44336" FontSize="14" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
 
-        <!-- Chores List -->
-        <RefreshView Grid.Row="2" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+        <!-- Chores list -->
+        <RefreshView Grid.Row="2" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
             <CollectionView ItemsSource="{Binding Chores}"
-                            EmptyView="No chores available. Add some to get started!"
+                            EmptyView="{x:Static strings:AppResources.Chores_Empty}"
                             Margin="0,8">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChoreItemViewModel">
-                        <SwipeView>
-                            <SwipeView.Content>
-                                <Frame Margin="16,4" Padding="16" CornerRadius="12" BorderColor="Transparent"
-                                       BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                            <Label Text="{Binding Chore.Name}" FontSize="16" FontAttributes="Bold" />
-                                            <Label Text="{Binding Chore.Description}" FontSize="13" TextColor="Gray" />
-                                            <Label Text="{Binding Chore.PointValue, StringFormat='⭐ {0} pts'}"
-                                                   FontSize="13"
-                                                   TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" />
-                                        </VerticalStackLayout>
-                                        <Button Grid.Column="1"
-                                                Text="{Binding IsCompleted, Converter={StaticResource BoolToCompletedTextConverter}}"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ChoresViewModel}}, Path=CompleteChoreCommand}"
-                                                CommandParameter="{Binding .}"
-                                                IsEnabled="{Binding IsCompleted, Converter={StaticResource InverseBoolConverter}}"
-                                                BackgroundColor="{Binding IsCompleted, Converter={StaticResource BoolToCompletedColorConverter}}"
-                                                TextColor="White"
-                                                CornerRadius="8"
-                                                WidthRequest="90"
-                                                HeightRequest="40" />
-                                    </Grid>
-                                </Frame>
-                            </SwipeView.Content>
-                        </SwipeView>
+                        <Border Margin="16,4" Padding="16" StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="{Binding Chore.Icon, Converter={StaticResource IconKeyConverter}}"
+                                       FontSize="28" VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="{Binding Chore.Title}" FontSize="16" FontAttributes="Bold" />
+                                    <Label Text="{Binding Chore.Description}" FontSize="13" TextColor="Gray" />
+                                    <Label FontSize="13" TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding Chore.Points, StringFormat={x:Static strings:AppResources.Chores_Points}}" />
+                                                <Span Text=" · " TextColor="Gray" />
+                                                <Span Text="{Binding FrequencyText}" TextColor="Gray" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                </VerticalStackLayout>
+                                <Button Grid.Column="2"
+                                        Text="{Binding ActionText}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ChoresViewModel}}, Path=CompleteChoreCommand, x:DataType=vm:ChoresViewModel}"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding IsCompleted, Converter={StaticResource InverseBoolConverter}}"
+                                        BackgroundColor="{Binding IsCompleted, Converter={StaticResource BoolToCompletedColorConverter}}"
+                                        TextColor="White"
+                                        CornerRadius="8"
+                                        WidthRequest="90"
+                                        HeightRequest="40" />
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

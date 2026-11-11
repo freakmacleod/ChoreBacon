@@ -40,4 +40,151 @@
   <data name="Login_Error_Generic" xml:space="preserve">
     <value>Inloggningen misslyckades. Försök igen.</value>
   </data>
+  <data name="Tab_Dashboard" xml:space="preserve">
+    <value>Översikt</value>
+  </data>
+  <data name="Tab_Chores" xml:space="preserve">
+    <value>Sysslor</value>
+  </data>
+  <data name="Tab_Store" xml:space="preserve">
+    <value>Butik</value>
+  </data>
+  <data name="Tab_Achievements" xml:space="preserve">
+    <value>Prestationer</value>
+  </data>
+  <data name="Common_Points" xml:space="preserve">
+    <value>{0} poäng</value>
+  </data>
+  <data name="Dashboard_StreakDays" xml:space="preserve">
+    <value>{0} dagar</value>
+  </data>
+  <data name="Dashboard_StreakLabel" xml:space="preserve">
+    <value>Nuvarande svit</value>
+  </data>
+  <data name="Dashboard_DoneLabel" xml:space="preserve">
+    <value>Avklarade sysslor</value>
+  </data>
+  <data name="Dashboard_LifetimeEarned" xml:space="preserve">
+    <value>Totalt intjänat: {0} poäng</value>
+  </data>
+  <data name="Dashboard_QuickActions" xml:space="preserve">
+    <value>Snabbval</value>
+  </data>
+  <data name="Dashboard_RecentAchievements" xml:space="preserve">
+    <value>Senaste prestationerna</value>
+  </data>
+  <data name="Dashboard_NoAchievements" xml:space="preserve">
+    <value>Inga prestationer än. Gör sysslor för att låsa upp dem!</value>
+  </data>
+  <data name="Dashboard_Logout" xml:space="preserve">
+    <value>Logga ut</value>
+  </data>
+  <data name="Chores_Balance" xml:space="preserve">
+    <value>⭐ {0} poäng</value>
+  </data>
+  <data name="Chores_Empty" xml:space="preserve">
+    <value>Inga sysslor just nu.</value>
+  </data>
+  <data name="Chores_Do" xml:space="preserve">
+    <value>Gör den!</value>
+  </data>
+  <data name="Chores_Done" xml:space="preserve">
+    <value>Klar ✓</value>
+  </data>
+  <data name="Chores_Pending" xml:space="preserve">
+    <value>Väntar</value>
+  </data>
+  <data name="Chores_Points" xml:space="preserve">
+    <value>⭐ {0} poäng</value>
+  </data>
+  <data name="Chores_PointsEarned" xml:space="preserve">
+    <value>+{0} poäng för {1}!</value>
+  </data>
+  <data name="Frequency_Daily" xml:space="preserve">
+    <value>Varje dag</value>
+  </data>
+  <data name="Frequency_Weekly" xml:space="preserve">
+    <value>Varje vecka</value>
+  </data>
+  <data name="Frequency_Monthly" xml:space="preserve">
+    <value>Varje månad</value>
+  </data>
+  <data name="Frequency_Once" xml:space="preserve">
+    <value>En gång</value>
+  </data>
+  <data name="Achievement_Unlocked" xml:space="preserve">
+    <value>🏆 Ny prestation: {0}!</value>
+  </data>
+  <data name="Store_Balance" xml:space="preserve">
+    <value>⭐ {0} poäng att använda</value>
+  </data>
+  <data name="Store_Empty" xml:space="preserve">
+    <value>Inga belöningar ännu.</value>
+  </data>
+  <data name="Store_Cost" xml:space="preserve">
+    <value>⭐ {0} poäng</value>
+  </data>
+  <data name="Store_SoldOut" xml:space="preserve">
+    <value>Slutsåld</value>
+  </data>
+  <data name="Store_StockLeft" xml:space="preserve">
+    <value>{0} kvar</value>
+  </data>
+  <data name="Store_ConfirmTitle" xml:space="preserve">
+    <value>Lös in belöning</value>
+  </data>
+  <data name="Store_ConfirmMessage" xml:space="preserve">
+    <value>Vill du lösa in ”{0}” för {1} poäng?</value>
+  </data>
+  <data name="Store_ConfirmAccept" xml:space="preserve">
+    <value>Lös in</value>
+  </data>
+  <data name="Store_ConfirmCancel" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+  <data name="Store_Redeemed" xml:space="preserve">
+    <value>Du har löst in: {0}!</value>
+  </data>
+  <data name="Achievements_Progress" xml:space="preserve">
+    <value>🏆 {0} av {1} upplåsta</value>
+  </data>
+  <data name="Achievements_Empty" xml:space="preserve">
+    <value>Inga prestationer hittades.</value>
+  </data>
+  <data name="Achievements_Bonus" xml:space="preserve">
+    <value>+{0} bonuspoäng</value>
+  </data>
+  <data name="Error_Network" xml:space="preserve">
+    <value>Kunde inte nå servern. Kontrollera din internetanslutning och försök igen.</value>
+  </data>
+  <data name="Error_SessionExpired" xml:space="preserve">
+    <value>Din session har gått ut. Logga in igen.</value>
+  </data>
+  <data name="Error_Generic" xml:space="preserve">
+    <value>Något gick fel. Försök igen.</value>
+  </data>
+  <data name="Error_AlreadyCompletedToday" xml:space="preserve">
+    <value>Den här sysslan är redan gjord idag.</value>
+  </data>
+  <data name="Error_AlreadyCompletedThisWeek" xml:space="preserve">
+    <value>Den här sysslan är redan gjord den här veckan.</value>
+  </data>
+  <data name="Error_AlreadyCompletedThisMonth" xml:space="preserve">
+    <value>Den här sysslan är redan gjord den här månaden.</value>
+  </data>
+  <data name="Error_AlreadyCompleted" xml:space="preserve">
+    <value>Den här sysslan är redan gjord.</value>
+  </data>
+  <data name="Error_ChoreNotFound" xml:space="preserve">
+    <value>Sysslan finns inte längre.</value>
+  </data>
+  <data name="Error_RewardNotFound" xml:space="preserve">
+    <value>Belöningen finns inte längre.</value>
+  </data>
+  <data name="Error_OutOfStock" xml:space="preserve">
+    <value>Belöningen är slutsåld.</value>
+  </data>
+  <data name="Error_InsufficientPoints" xml:space="preserve">
+    <value>Du har inte tillräckligt med poäng.</value>
+  </data>
 </root>

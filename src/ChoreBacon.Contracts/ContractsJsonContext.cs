@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChoreBacon.Contracts.Auth;
+using ChoreBacon.Contracts.Progress;
 
 namespace ChoreBacon.Contracts;
 
@@ -12,4 +13,10 @@ namespace ChoreBacon.Contracts;
 [JsonSerializable(typeof(LogoutRequest))]
 [JsonSerializable(typeof(DevLoginRequest))]
 [JsonSerializable(typeof(MeResponse))]
+[JsonSerializable(typeof(List<ChoreDto>))]
+[JsonSerializable(typeof(CompleteChoreResponse))]
+[JsonSerializable(typeof(List<RewardDto>))]
+[JsonSerializable(typeof(RedeemRewardResponse))]
+[JsonSerializable(typeof(List<AchievementDto>))]
+[JsonSerializable(typeof(ProgressResponse))]
 public sealed partial class ContractsJsonContext : JsonSerializerContext;

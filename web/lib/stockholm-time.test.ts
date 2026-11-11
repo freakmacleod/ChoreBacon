@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isoWeek, periodKey, stockholmDate } from "./stockholm-time";
+import { addDays, isoWeek, periodKey, stockholmDate } from "./stockholm-time";
 
 const at = (iso: string) => new Date(iso);
 
@@ -56,5 +56,14 @@ describe("periodKey (business rule 2: frequency windows in Europe/Stockholm)", (
   it("once has a single window forever", () => {
     expect(periodKey("once", at("2026-01-01T00:00:00Z"))).toBe("once");
     expect(periodKey("once", at("2030-06-15T12:00:00Z"))).toBe("once");
+  });
+});
+
+describe("addDays", () => {
+  it("does calendar arithmetic across month, year and leap days", () => {
+    expect(addDays("2026-11-11", -1)).toBe("2026-11-10");
+    expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
+    expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+    expect(addDays("2026-03-29", 1)).toBe("2026-03-30"); // DST night is still one calendar day
   });
 });

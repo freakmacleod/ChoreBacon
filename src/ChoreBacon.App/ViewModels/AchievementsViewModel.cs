@@ -1,78 +1,56 @@
+using System.Collections.ObjectModel;
+using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Resources.Strings;
+using ChoreBacon.Services.Api;
+using ChoreBacon.Services.Ui;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ChoreBacon.Models;
-using ChoreBacon.Services.Interfaces;
-using System.Collections.ObjectModel;
 
 namespace ChoreBacon.ViewModels;
 
-public partial class AchievementsViewModel : BaseViewModel
+public partial class AchievementsViewModel : ApiViewModel
 {
-    private readonly IAchievementService _achievements;
-    private readonly IAuthService _auth;
+    private readonly IChoreBaconApi _api;
 
-    [ObservableProperty] private int _unlockedCount;
-    [ObservableProperty] private int _totalCount;
+    [ObservableProperty]
+    public partial int UnlockedCount { get; set; }
+
+    [ObservableProperty]
+    public partial int TotalCount { get; set; }
 
     public ObservableCollection<AchievementItemViewModel> Achievements { get; } = [];
 
-    public AchievementsViewModel(IAchievementService achievements, IAuthService auth)
+    public AchievementsViewModel(IChoreBaconApi api, INavigator navigator) : base(navigator)
     {
-        _achievements = achievements;
-        _auth = auth;
-        Title = "Achievements";
+        _api = api;
+        Title = AppResources.Tab_Achievements;
     }
 
     [RelayCommand]
-    public async Task LoadAsync()
+    private Task LoadAsync(CancellationToken cancellationToken) => RunAsync(async () =>
     {
-        if (IsBusy) return;
-        IsBusy = true;
-        try
-        {
-            var user = _auth.CurrentUser;
-            if (user is null) return;
+        // The API returns them ordered by rarity, then threshold.
+        var all = await _api.GetAchievementsAsync(cancellationToken);
+        TotalCount = all.Count;
+        UnlockedCount = all.Count(a => a.UnlockedAt is not null);
 
-            var all = await _achievements.GetAllAchievementsAsync();
-            var userAchievements = await _achievements.GetUserAchievementsAsync(user.Id);
-            var unlockedIds = userAchievements.ToDictionary(ua => ua.AchievementId, ua => ua.UnlockedAt);
-
-            TotalCount = all.Count;
-            UnlockedCount = unlockedIds.Count;
-
-            Achievements.Clear();
-            foreach (var ach in all.OrderBy(a => a.Rarity).ThenBy(a => a.Name))
-            {
-                bool isUnlocked = unlockedIds.TryGetValue(ach.Id, out var unlockedAt);
-                Achievements.Add(new AchievementItemViewModel(ach, isUnlocked, isUnlocked ? unlockedAt : null));
-            }
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
+        Achievements.Clear();
+        foreach (var achievement in all)
+            Achievements.Add(new AchievementItemViewModel(achievement));
+    }, cancellationToken);
 }
 
-public class AchievementItemViewModel
+public sealed class AchievementItemViewModel(AchievementDto achievement)
 {
-    public Achievement Achievement { get; }
-    public bool IsUnlocked { get; }
-    public DateTime? UnlockedAt { get; }
+    public AchievementDto Achievement { get; } = achievement;
+    public bool IsUnlocked => Achievement.UnlockedAt is not null;
+
     public string RarityColor => Achievement.Rarity switch
     {
-        AchievementRarity.Common    => "#9E9E9E",
-        AchievementRarity.Uncommon  => "#4CAF50",
-        AchievementRarity.Rare      => "#2196F3",
-        AchievementRarity.Epic      => "#9C27B0",
+        AchievementRarity.Uncommon => "#4CAF50",
+        AchievementRarity.Rare => "#2196F3",
+        AchievementRarity.Epic => "#9C27B0",
         AchievementRarity.Legendary => "#FF9800",
-        _                           => "#9E9E9E"
+        _ => "#9E9E9E",
     };
-
-    public AchievementItemViewModel(Achievement achievement, bool isUnlocked, DateTime? unlockedAt)
-    {
-        Achievement = achievement;
-        IsUnlocked = isUnlocked;
-        UnlockedAt = unlockedAt;
-    }
 }
