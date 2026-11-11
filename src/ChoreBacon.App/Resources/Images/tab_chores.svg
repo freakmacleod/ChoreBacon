@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Placeholder tab icon (checklist). The tab bar tints it; replace with real artwork. -->
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3.5 5.5 5 7l3-3 1.2 1.2L5 9.4 2.3 6.7Zm7.5 0h10v2H11Zm-7.5 6L5 13l3-3 1.2 1.2L5 15.4l-2.7-2.7Zm7.5 0h10v2H11ZM3 18h6v2H3Zm8 0h10v2H11Z" fill="#000000" />
+</svg>

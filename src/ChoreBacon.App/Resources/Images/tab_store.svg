@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Placeholder tab icon (gift). The tab bar tints it; replace with real artwork. -->
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 7h-2.2A3 3 0 0 0 12 4a3 3 0 0 0-5.8 3H4a1 1 0 0 0-1 1v3h8V8h2v3h8V8a1 1 0 0 0-1-1ZM9 7a1 1 0 1 1 1-1v1Zm5 0V6a1 1 0 1 1 1 1ZM4 13v7a1 1 0 0 0 1 1h6v-8Zm9 8h6a1 1 0 0 0 1-1v-7h-7Z" fill="#000000" />
+</svg>
