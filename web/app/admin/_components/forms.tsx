@@ -7,7 +7,7 @@ import { sv } from "../strings";
 import { Field, buttonClass, inputClass, secondaryButtonClass } from "./ui";
 
 type Chore = { id: string; title: string; description: string; icon: string; points: number; frequency: string; isActive: boolean };
-type Reward = { id: string; title: string; description: string; icon: string; cost: number; stock: number | null; isActive: boolean };
+type Reward = { id: string; title: string; description: string; icon: string; cost: number; isActive: boolean };
 type Achievement = {
   id: string;
   code: string;
@@ -92,9 +92,7 @@ export function RewardForm({ reward }: { reward?: Reward }) {
       <Field label={sv.rewards.cost} name="cost" error={state.errors?.cost}>
         <input id="cost" name="cost" type="number" min={1} defaultValue={reward?.cost ?? 50} required className={inputClass} />
       </Field>
-      <Field label={sv.rewards.stock} name="stock" error={state.errors?.stock} hint={sv.rewards.stockHint}>
-        <input id="stock" name="stock" type="number" min={0} defaultValue={reward?.stock ?? ""} className={inputClass} />
-      </Field>
+      <p className="text-xs text-zinc-500">{sv.rewards.stockHint}</p>
       <Actions pending={pending} back="/admin/rewards" error={state.errors?.form} />
     </form>
   );

@@ -22,7 +22,7 @@ import type { AchievementInput, ChoreInput, RewardInput } from "./schemas";
 
 const now = new Date("2026-11-09T09:00:00Z");
 const chore: ChoreInput = { title: "Test admin chore", description: "", icon: "dishes", points: 10, frequency: "daily", isActive: true };
-const reward: RewardInput = { title: "Test admin reward", description: "", icon: "reward_game", cost: 10, stock: 1, isActive: true };
+const reward: RewardInput = { title: "Test admin reward", description: "", icon: "reward_game", cost: 10, isActive: true };
 const achievement = (code: string): AchievementInput => ({
   code,
   title: "Test",
@@ -43,7 +43,7 @@ async function seedUser(tx: Executor, role: "user" | "admin" = "user") {
   return user.id;
 }
 
-describe.skipIf(!hasDevDatabase)("admin catalog (development database, rolled back)", () => {
+describe.skipIf(!hasDevDatabase)("admin catalog (development database, rolled back)", { timeout: 30_000 }, () => {
   afterAll(closeDevDatabase);
 
   it("creates, edits and deactivates a global chore; the app only sees active ones", async () => {
@@ -62,20 +62,21 @@ describe.skipIf(!hasDevDatabase)("admin catalog (development database, rolled ba
     });
   });
 
-  it("lets an admin restock a sold-out reward explicitly", async () => {
+  it("edits and deactivates a global reward, which is always unlimited", async () => {
     await inRollback(async (tx) => {
       const userId = await seedUser(tx);
       await tx.insert(pointLedger).values({ userId, delta: 100, reason: "admin_adjustment" });
       const id = await createReward(tx, reward);
 
       expect((await redeemReward(tx, userId, id, now)).ok).toBe(true);
-      expect(await redeemReward(tx, userId, id, now)).toMatchObject({ code: "reward_out_of_stock" });
-
-      expect(await updateReward(tx, id, { ...reward, stock: 2 })).toBe(true);
       expect((await redeemReward(tx, userId, id, now)).ok).toBe(true);
+      expect((await appRewards(tx, userId)).find((r) => r.id === id)?.stock).toBeNull();
+
+      expect(await updateReward(tx, id, { ...reward, cost: 20 })).toBe(true);
+      expect((await appRewards(tx, userId)).find((r) => r.id === id)?.cost).toBe(20);
 
       expect(await setRewardActive(tx, id, false)).toBe(true);
-      expect((await appRewards(tx)).some((r) => r.id === id)).toBe(false);
+      expect((await appRewards(tx, userId)).some((r) => r.id === id)).toBe(false);
     });
   });
 

@@ -36,8 +36,7 @@ export const rewardInput = z.object({
   description: text(500).default(""),
   icon: key,
   cost: int(1, 1_000_000),
-  // Empty = unlimited. Setting a number is an explicit restock by an admin (never automatic, rule 5).
-  stock: z.preprocess((value) => (value === "" || value == null ? null : value), int(0, 1_000_000).nullable()),
+  // No stock here: global rewards are unlimited; stock is counted per family (set by parents).
   isActive: checkbox,
 });
 

@@ -67,7 +67,10 @@ export const users = pgTable(
 export const families = pgTable("families", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  // When true, children's completions wait for a parent's approval before points are booked.
   requiresApproval: boolean("requires_approval").notNull().default(false),
+  // Shared by a parent so others can join (as children). Stored normalised: 8 chars, no dash.
+  inviteCode: text("invite_code").notNull().unique(),
   createdAt: createdAt(),
 });
 
@@ -83,7 +86,8 @@ export const familyMembers = pgTable(
     role: familyRole("role").notNull(),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.familyId, t.userId] }), index("family_members_user_idx").on(t.userId)],
+  // One family per user (for now): the unique index on user_id enforces it.
+  (t) => [primaryKey({ columns: [t.familyId, t.userId] }), uniqueIndex("family_members_user_uq").on(t.userId)],
 );
 
 // ── Catalog ──────────────────────────────────────────────────────────────────
@@ -131,6 +135,9 @@ export const rewards = pgTable(
   (t) => [
     check("rewards_cost_positive", sql`${t.cost} > 0`),
     check("rewards_stock_non_negative", sql`${t.stock} IS NULL OR ${t.stock} >= 0`),
+    // Stock is counted per family: global rewards are unlimited; families set stock via
+    // reward_family_settings.stock or on their own family-only rewards.
+    check("rewards_global_unlimited", sql`${t.familyId} IS NOT NULL OR ${t.stock} IS NULL`),
     index("rewards_family_idx").on(t.familyId),
   ],
 );
@@ -163,11 +170,14 @@ export const rewardFamilySettings = pgTable(
       .notNull()
       .references(() => rewards.id, { onDelete: "cascade" }),
     costOverride: integer("cost_override"),
+    // This family's stock of a global reward; NULL = unlimited. Decremented atomically on redemption.
+    stock: integer("stock"),
     isActive: boolean("is_active").notNull().default(true),
   },
   (t) => [
     primaryKey({ columns: [t.familyId, t.rewardId] }),
     check("reward_family_settings_cost_positive", sql`${t.costOverride} IS NULL OR ${t.costOverride} > 0`),
+    check("reward_family_settings_stock_non_negative", sql`${t.stock} IS NULL OR ${t.stock} >= 0`),
   ],
 );
 
@@ -211,6 +221,9 @@ export const choreCompletions = pgTable(
     // Frequency window in Europe/Stockholm: 2026-11-10 (daily), 2026-W46 (weekly), 2026-11 (monthly), once.
     periodKey: text("period_key").notNull(),
     status: completionStatus("status").notNull().default("approved"),
+    // Points at completion time (after family overrides); booked when approved. NULL on rows from
+    // before families existed, which were all approved and booked immediately.
+    points: integer("points"),
   },
   (t) => [
     // Enforces "once per frequency window" in the DB; a rejected completion frees the slot.
