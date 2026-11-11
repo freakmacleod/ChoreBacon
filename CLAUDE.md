@@ -60,7 +60,9 @@ do it as a separate commit.
 - **Dev login:** a `DEBUG`-only "Logga in som testanvändare" button that calls
   `/api/v1/auth/dev` — that endpoint must return 404 unless `ALLOW_DEV_LOGIN=true` and it is
   never enabled in production.
-- Admin GUI: same Google/Facebook login (Auth.js), access limited to users with role `admin`.
+- Admin GUI: same Google/Facebook login as the app (our own OAuth flow, started with `?client=admin`),
+  giving a signed HttpOnly session cookie; access limited to users with role `admin`, checked against the
+  database on every request. (Decided against Auth.js: no extra dependency or redirect URIs.)
 
 ### Roles and families
 - Roles: `admin` (global catalog), `parent`, `child`.

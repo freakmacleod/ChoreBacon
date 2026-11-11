@@ -183,6 +183,8 @@ export const achievements = pgTable(
     threshold: integer("threshold").notNull(),
     bonusPoints: integer("bonus_points").notNull().default(0),
     rarity: achievementRarity("rarity").notNull().default("common"),
+    // Inactive achievements are hidden and never unlock; already unlocked ones stay unlocked.
+    isActive: boolean("is_active").notNull().default(true),
     createdAt: createdAt(),
   },
   (t) => [

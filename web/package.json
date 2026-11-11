@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate:production": "CHOREBACON_DB=production drizzle-kit migrate"
+    "db:migrate:production": "CHOREBACON_DB=production drizzle-kit migrate",
+    "admin:grant": "node scripts/grant-admin.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

@@ -195,6 +195,29 @@ describe.skipIf(!hasDevDatabase)("progress service (development database, rolled
       });
     });
 
+    it("never unlocks inactive achievements and hides them unless already unlocked", async () => {
+      await inRollback(async (tx) => {
+        const userId = await seedUser(tx);
+        const hidden = `test_hidden_${randomUUID()}`;
+        const kept = `test_kept_${randomUUID()}`;
+        await tx.insert(achievements).values([
+          { code: hidden, title: "Hidden", ruleType: "chores_completed", threshold: 1, isActive: false },
+          { code: kept, title: "Kept", ruleType: "chores_completed", threshold: 1 },
+        ]);
+
+        const done = await completeChore(tx, userId, await seedChore(tx, "daily"), monday);
+        const codes = done.ok ? done.unlockedAchievements.map((a) => a.code) : [];
+        expect(codes).toContain(kept);
+        expect(codes).not.toContain(hidden);
+
+        // Deactivating after the unlock keeps it visible for this user.
+        await tx.update(achievements).set({ isActive: false }).where(eq(achievements.code, kept));
+        const listed = (await listAchievements(tx, userId)).map((a) => a.code);
+        expect(listed).toContain(kept);
+        expect(listed).not.toContain(hidden);
+      });
+    });
+
     it("books the bonus once and reports it in the summary", async () => {
       await inRollback(async (tx) => {
         const userId = await seedUser(tx);

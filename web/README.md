@@ -34,6 +34,7 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | `npm run db:generate` | Generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | Apply pending migrations to the **development** branch (`.env.development.local`) |
 | `npm run db:migrate:production` | Apply pending migrations to **production** (`.env.local` only) |
+| `npm run admin:grant -- --email … [--provider …] [--production] [--revoke]` | Grant or remove the admin role for one user (development unless `--production`) |
 
 ## Database
 
@@ -91,3 +92,17 @@ transaction; they are skipped when that file is missing.
   `https://chorebacon.vercel.app/api/v1/auth/{provider}/callback`. Preview deployments use dev login.
 - Local dev: put `JWT_SIGNING_KEY` and `ALLOW_DEV_LOGIN=true` in `.env.development.local`
   (gitignored, not touched by `vercel env pull`).
+
+## Admin
+
+`/admin` is the admin GUI (Swedish): global chores, rewards and achievements, and the user list.
+
+- **Sign-in:** the same Google/Facebook flow as the app, started with `/api/v1/auth/{provider}/start?client=admin`. The callback sets
+  `cb_admin_session`, a signed HttpOnly cookie valid for 8 hours. Only users with role `admin` get one, and the role is re-read
+  from the database on every page section and Server Action. Local and Preview deployments also offer a dev admin login
+  (same `ALLOW_DEV_LOGIN` gate as the app's dev login).
+- **Deactivate, never delete:** chores, rewards and achievements are switched off rather than deleted, so history keeps its
+  references. Inactive items are hidden from the app; inactive achievements never unlock.
+- **Stock:** an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.
+- **Roles:** the first admin is granted with `npm run admin:grant -- --email … --production` after that person has signed in
+  once. After that, use the Användare page. An admin cannot remove their own admin role.

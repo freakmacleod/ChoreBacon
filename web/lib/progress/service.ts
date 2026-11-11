@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
 import { achievements, choreCompletions, chores, pointLedger, redemptions, rewards, userAchievements, users } from "../../db/schema";
 import { type Frequency, periodKey, stockholmDate } from "../stockholm-time";
@@ -58,7 +58,7 @@ export async function loadStats(exec: Executor, userId: string, now: Date): Prom
 
 /** Unlocks every achievement the user now qualifies for and books their bonus points. Call inside a transaction. */
 async function unlockAchievements(tx: Executor, userId: string, now: Date) {
-  const all = await tx.select(achievementColumns).from(achievements);
+  const all = await tx.select(achievementColumns).from(achievements).where(eq(achievements.isActive, true));
   const owned = await tx
     .select({ id: userAchievements.achievementId })
     .from(userAchievements)
@@ -236,7 +236,7 @@ export async function redeemReward(exec: Executor, userId: string, rewardId: str
 
 // ── Achievements and summary ─────────────────────────────────────────────────
 
-/** All achievements, with when the user unlocked each (null = locked). */
+/** Active achievements plus any inactive ones the user already unlocked, with unlock time (null = locked). */
 export function listAchievements(exec: Executor, userId: string) {
   return exec
     .select({ ...achievementColumns, unlockedAt: userAchievements.unlockedAt })
@@ -245,6 +245,7 @@ export function listAchievements(exec: Executor, userId: string) {
       userAchievements,
       and(eq(userAchievements.achievementId, achievements.id), eq(userAchievements.userId, userId)),
     )
+    .where(or(eq(achievements.isActive, true), isNotNull(userAchievements.unlockedAt)))
     .orderBy(asc(RARITY_ORDER), asc(achievements.threshold), asc(achievements.title));
 }
 
