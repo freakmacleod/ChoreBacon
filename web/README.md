@@ -13,6 +13,16 @@ vercel env pull                    # writes .env.local (gitignored)
 npm run dev
 ```
 
+`.env.local` from `vercel env pull` holds the **production** database URL. For local work, put the
+Neon `development` branch in `.env.development.local` (gitignored, never overwritten by `vercel env pull`,
+and it takes precedence over `.env.local` in both `next dev` and drizzle-kit):
+
+```bash
+# connection strings for the development branch (pooled and direct)
+npx neonctl connection-string development --pooled   # -> DATABASE_URL
+npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
+```
+
 ## Scripts
 
 | Script | What |
@@ -22,10 +32,13 @@ npm run dev
 | `npm run lint` / `npm run typecheck` | ESLint / `tsc --noEmit` |
 | `npm test` | Vitest |
 | `npm run db:generate` | Generate a migration from `db/schema.ts` |
-| `npm run db:migrate` | Apply pending migrations (uses `DATABASE_URL_UNPOOLED`) |
+| `npm run db:migrate` | Apply pending migrations to the **development** branch (`.env.development.local`) |
+| `npm run db:migrate:production` | Apply pending migrations to **production** (`.env.local` only) |
 
 ## Database
 
+- Neon project `chorebacon-db` (AWS eu-central-1) has two branches: `main` = production, `development` =
+  local dev and Vercel Preview/Development. Run new migrations on `development` first, then on production.
 - Schema: `db/schema.ts`. Migrations: `db/migrations/` — never edit the DB by hand.
 - `0001_ledger_append_only` installs triggers that reject UPDATE/DELETE/TRUNCATE on `point_ledger`.
 - `0002_seed_catalog` is the one-time seed of the global catalog (Swedish). There is no re-seed script.
