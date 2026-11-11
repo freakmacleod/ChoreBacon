@@ -7,9 +7,9 @@ earn points and redeem them for real-life rewards, unlocking achievements along 
 The chore, reward and achievement catalog is managed in a web admin and served by an API
 hosted on Vercel in the EU (Frankfurt).
 
-> **Status:** early development. The app scaffolding (MVVM, pages, local SQLite services)
-> exists; the backend, real sign-in and admin GUI are not built yet. See the backlog in
-> [CLAUDE.md](CLAUDE.md).
+> **Status:** early development. Sign-in (Google, Facebook) and the API for chores, rewards,
+> achievements and progress work end to end; the app keeps no local database. The admin GUI
+> and families are next. See the backlog in [CLAUDE.md](CLAUDE.md).
 
 ## Repository layout
 
@@ -17,7 +17,8 @@ hosted on Vercel in the EU (Frankfurt).
 |------|------|
 | `src/ChoreBacon.App/` | .NET 10 MAUI app |
 | `tests/ChoreBacon.App.Tests/` | xUnit v3 tests for the app's shared code |
-| `web/` | Next.js admin GUI + REST API *(planned)* |
+| `src/ChoreBacon.Contracts/` | Shared API DTOs (records, source-generated JSON) |
+| `web/` | Next.js REST API (admin GUI planned) |
 | `ChoreBacon.slnx` | Solution |
 
 ## Prerequisites
@@ -26,7 +27,7 @@ hosted on Vercel in the EU (Frankfurt).
 - Android SDK + JDK for Android builds (Visual Studio / Rider install these; on the command
   line see <https://aka.ms/dotnet-android-install-sdk>)
 - macOS with Xcode for iOS builds
-- Node.js 22+ for `web/` (once it exists)
+- Node.js 22+ for `web/`
 
 ## Build and test
 
