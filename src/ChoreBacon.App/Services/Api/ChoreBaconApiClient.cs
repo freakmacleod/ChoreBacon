@@ -1,12 +1,10 @@
-using System.Net.Http.Json;
-using System.Text.Json.Serialization.Metadata;
 using ChoreBacon.Contracts;
 using ChoreBacon.Contracts.Auth;
 using ChoreBacon.Contracts.Progress;
 
 namespace ChoreBacon.Services.Api;
 
-public sealed class ChoreBaconApiClient(HttpClient http) : IChoreBaconApi
+public sealed class ChoreBaconApiClient(HttpClient http) : ApiClientBase(http), IChoreBaconApi
 {
     private static ContractsJsonContext Json => ContractsJsonContext.Default;
 
@@ -30,22 +28,4 @@ public sealed class ChoreBaconApiClient(HttpClient http) : IChoreBaconApi
 
     public async Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken) =>
         await GetAsync("api/v1/achievements", Json.ListAchievementDto, cancellationToken);
-
-    private async Task<T> GetAsync<T>(string path, JsonTypeInfo<T> type, CancellationToken cancellationToken)
-    {
-        using var response = await http.GetAsync(path, cancellationToken);
-        return await ReadAsync(response, type, cancellationToken);
-    }
-
-    private async Task<T> PostAsync<T>(string path, JsonTypeInfo<T> type, CancellationToken cancellationToken)
-    {
-        using var response = await http.PostAsync(path, content: null, cancellationToken);
-        return await ReadAsync(response, type, cancellationToken);
-    }
-
-    private static async Task<T> ReadAsync<T>(HttpResponseMessage response, JsonTypeInfo<T> type, CancellationToken cancellationToken)
-    {
-        await ApiException.EnsureSuccessAsync(response, cancellationToken);
-        return (await response.Content.ReadFromJsonAsync(type, cancellationToken))!;
-    }
 }

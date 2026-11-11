@@ -20,16 +20,21 @@ internal sealed class FakeDialogs(bool answer = true) : IDialogs
 {
     public List<string> Messages { get; } = [];
 
+    public Queue<string?> PromptAnswers { get; } = [];
+
     public Task<bool> ConfirmAsync(string title, string message, string accept, string cancel)
     {
         Messages.Add(message);
         return Task.FromResult(answer);
     }
+
+    public Task<string?> PromptAsync(string title, string message, string accept, string cancel, int maxLength) =>
+        Task.FromResult(PromptAnswers.Count > 0 ? PromptAnswers.Dequeue() : null);
 }
 
 internal sealed class FakeAuthService : IAuthService
 {
-    public MeResponse? CurrentUser { get; set; } = new(Guid.NewGuid(), "google", "Anna Andersson", null, "user");
+    public MeResponse? CurrentUser { get; set; } = new(Make.Me, "google", "Anna Andersson", null, "user");
     public bool IsLoggedIn => CurrentUser is not null;
     public int Logouts { get; private set; }
 
@@ -66,7 +71,11 @@ internal static class Dto
 
     public static CompleteChoreResponse Completed(ChoreDto chore, int balance, params AchievementDto[] unlocked) =>
         new(new CompletionDto(Guid.NewGuid(), chore.Id, "2026-11-11", "2026-11-11", CompletionStatus.Approved, DateTimeOffset.UtcNow),
-            chore.Points, balance, unlocked);
+            chore.Points, 0, balance, unlocked);
+
+    public static CompleteChoreResponse PendingApproval(ChoreDto chore, int balance) =>
+        new(new CompletionDto(Guid.NewGuid(), chore.Id, "2026-11-11", "2026-11-11", CompletionStatus.Pending, DateTimeOffset.UtcNow),
+            0, chore.Points, balance, []);
 
     public static RedeemRewardResponse Redeemed(RewardDto reward, int balance) =>
         new(new RedemptionDto(Guid.NewGuid(), reward.Id, reward.Cost, RedemptionStatus.Pending, DateTimeOffset.UtcNow), balance, []);
