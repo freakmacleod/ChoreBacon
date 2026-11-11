@@ -38,6 +38,18 @@ dotnet build src/ChoreBacon.App -f net10.0-android
 dotnet test --project tests/ChoreBacon.App.Tests
 ```
 
+### Which API the app talks to
+
+The API base URL is set at build time (`ChoreBaconApiBaseUrl`): Debug → local dev server
+(`http://10.0.2.2:3000/` on the Android emulator, `http://localhost:3000/` elsewhere), Release →
+`https://chorebacon.vercel.app/`. Debug builds show a **"Logga in som testanvändare"** button that uses
+the API's dev login. Real Google/Facebook sign-in only works against production or `localhost:3000`
+(the registered redirect URIs), e.g.:
+
+```bash
+dotnet build src/ChoreBacon.App -f net10.0-android -p:ChoreBaconApiBaseUrl=https://chorebacon.vercel.app/
+```
+
 Tests run on Microsoft.Testing.Platform (configured in `global.json`), so `dotnet test`
 takes `--project` / `--solution` rather than a bare path. Running `dotnet test` against the
 whole solution also builds the Android target and therefore needs the Android SDK.

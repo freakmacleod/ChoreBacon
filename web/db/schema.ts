@@ -268,3 +268,24 @@ export const userAchievements = pgTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.achievementId] })],
 );
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+// Refresh tokens are stored hashed (SHA-256) and rotated on every use. All tokens descending from one
+// sign-in share a chain_id; presenting an already-used token revokes the whole chain (reuse detection).
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    chainId: uuid("chain_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("refresh_tokens_chain_idx").on(t.chainId), index("refresh_tokens_user_idx").on(t.userId)],
+);

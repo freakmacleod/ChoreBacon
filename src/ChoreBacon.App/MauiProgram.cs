@@ -1,4 +1,6 @@
 using ChoreBacon.Services;
+using ChoreBacon.Services.Api;
+using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
 using ChoreBacon.ViewModels;
 using ChoreBacon.Views;
@@ -20,6 +22,23 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
+
+        // ── Platform ──────────────────────────────────────────────────────────
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton(SecureStorage.Default);
+        builder.Services.AddSingleton(WebAuthenticator.Default);
+
+        // ── API + auth ────────────────────────────────────────────────────────
+        var apiConfig = ApiConfig.FromAssemblyMetadata();
+        builder.Services.AddSingleton(apiConfig);
+        builder.Services.AddSingleton<ITokenStore, SecureTokenStore>();
+        builder.Services.AddSingleton<TokenManager>();
+        builder.Services.AddTransient<AuthenticatedHttpHandler>();
+
+        // Token endpoints must not go through AuthenticatedHttpHandler (it would recurse into refresh).
+        builder.Services.AddHttpClient<IAuthApi, AuthApiClient>(c => c.BaseAddress = apiConfig.BaseAddress);
+        builder.Services.AddHttpClient<IChoreBaconApi, ChoreBaconApiClient>(c => c.BaseAddress = apiConfig.BaseAddress)
+            .AddHttpMessageHandler<AuthenticatedHttpHandler>();
 
         // ── Services ──────────────────────────────────────────────────────────
         builder.Services.AddSingleton<IDatabaseService, DatabaseService>();

@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/ChoreBacon.App/ChoreBacon.App.csproj" />
+    <Project Path="src/ChoreBacon.Contracts/ChoreBacon.Contracts.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ChoreBacon.App.Tests/ChoreBacon.App.Tests.csproj" />
