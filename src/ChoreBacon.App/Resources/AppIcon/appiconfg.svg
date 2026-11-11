@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Placeholder ChoreBacon mark: a wavy bacon strip. Replace with real artwork. -->
 <svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <g transform="rotate(-30 228 228)">
-        <path d="M 118 188 C 158 160, 188 216, 228 188 S 298 160, 338 188 L 338 268 C 298 240, 268 296, 228 268 S 158 240, 118 268 Z" fill="#FFF3E0" />
-        <path d="M 118 204 C 158 176, 188 232, 228 204 S 298 176, 338 204 L 338 222 C 298 194, 268 250, 228 222 S 158 194, 118 222 Z" fill="#C0392B" />
-        <path d="M 118 236 C 158 208, 188 264, 228 236 S 298 208, 338 236 L 338 252 C 298 224, 268 280, 228 252 S 158 224, 118 252 Z" fill="#C0392B" />
+    <g transform="rotate(-25 228 228)" fill="none" stroke-linecap="round">
+        <!-- One wave, stroked several times: fat (cream), then two meat stripes (red) offset along it. -->
+        <path d="M 108 228 C 148 178, 188 278, 228 228 S 308 178, 348 228" stroke="#FFF3E0" stroke-width="96" />
+        <path d="M 108 228 C 148 178, 188 278, 228 228 S 308 178, 348 228" stroke="#C0392B" stroke-width="20" transform="translate(0 -24)" />
+        <path d="M 108 228 C 148 178, 188 278, 228 228 S 308 178, 348 228" stroke="#C0392B" stroke-width="20" transform="translate(0 20)" />
     </g>
 </svg>

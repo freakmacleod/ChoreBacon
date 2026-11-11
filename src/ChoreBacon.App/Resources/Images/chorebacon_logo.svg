@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Placeholder ChoreBacon logo: a wavy bacon strip on an orange disc. Replace with real artwork. -->
+<svg width="200" height="200" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="228" cy="228" r="220" fill="#FF6B35" />
+    <g transform="rotate(-25 228 228)" fill="none" stroke-linecap="round">
+        <!-- One wave, stroked several times: fat (cream), then two meat stripes (red) offset along it. -->
+        <path d="M 108 228 C 148 178, 188 278, 228 228 S 308 178, 348 228" stroke="#FFF3E0" stroke-width="96" />
+        <path d="M 108 228 C 148 178, 188 278, 228 228 S 308 178, 348 228" stroke="#C0392B" stroke-width="20" transform="translate(0 -24)" />
+        <path d="M 108 228 C 148 178, 188 278, 228 228 S 308 178, 348 228" stroke="#C0392B" stroke-width="20" transform="translate(0 20)" />
+    </g>
+</svg>
