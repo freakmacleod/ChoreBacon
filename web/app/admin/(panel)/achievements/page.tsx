@@ -3,13 +3,15 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listAchievements } from "@/lib/admin/catalog";
+import { familyOptions } from "@/lib/admin/families";
 import { iconGlyph } from "@/lib/icons";
 import { setAchievementActive } from "../../actions";
 import { ActiveToggle } from "../../_components/ActiveToggle";
+import { ScopeCell, ScopeFilterBar, parseScopeFilter } from "../../_components/scope";
 import { PageHeader, StatusBadge, buttonClass, tableClass } from "../../_components/ui";
 import { sv } from "../../strings";
 
-export default function AchievementsPage() {
+export default function AchievementsPage({ searchParams }: PageProps<"/admin/achievements">) {
   return (
     <>
       <PageHeader
@@ -19,21 +21,31 @@ export default function AchievementsPage() {
       <p className="mb-1 text-sm text-zinc-500">{sv.common.achievementsHint}</p>
       <p className="mb-4 text-sm text-zinc-500">{sv.common.deactivateHint}</p>
       <Suspense fallback={<p>{sv.loading}</p>}>
-        <AchievementTable />
+        <AchievementTable searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
-async function AchievementTable() {
+async function AchievementTable({ searchParams }: Pick<PageProps<"/admin/achievements">, "searchParams">) {
   await requireAdmin();
-  const achievements = await listAchievements(db);
-  if (achievements.length === 0) return <p>{sv.common.empty}</p>;
+  const filter = parseScopeFilter((await searchParams).scope);
+  const [achievements, families] = await Promise.all([listAchievements(db, filter), familyOptions(db)]);
+  return (
+    <>
+      <ScopeFilterBar filter={filter} families={families} />
+      {achievements.length === 0 ? <p>{sv.common.empty}</p> : <AchievementTableRows achievements={achievements} />}
+    </>
+  );
+}
+
+function AchievementTableRows({ achievements }: { achievements: Awaited<ReturnType<typeof listAchievements>> }) {
   return (
     <table className={tableClass}>
       <thead>
         <tr>
           <th>{sv.common.title}</th>
+          <th>{sv.common.scope}</th>
           <th>{sv.achievements.rule}</th>
           <th>{sv.achievements.threshold}</th>
           <th>{sv.achievements.bonus}</th>
@@ -51,6 +63,9 @@ async function AchievementTable() {
                 {a.title}
               </Link>
               <div className="font-mono text-xs text-zinc-500">{a.code}</div>
+            </td>
+            <td>
+              <ScopeCell familyId={a.familyId} familyName={a.familyName} />
             </td>
             <td>{sv.achievements.rules[a.ruleType]}</td>
             <td>{a.threshold}</td>

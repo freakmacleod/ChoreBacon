@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getChore } from "@/lib/admin/catalog";
+import { familyOptions } from "@/lib/admin/families";
 import { isUuid } from "@/lib/api";
 import { ChoreForm } from "../../../_components/forms";
 import { PageHeader } from "../../../_components/ui";
@@ -19,11 +20,12 @@ export default function EditChorePage({ params }: PageProps<"/admin/chores/[id]"
 async function Editor({ params }: Pick<PageProps<"/admin/chores/[id]">, "params">) {
   await requireAdmin();
   const { id } = await params;
+  const families = await familyOptions(db);
   if (id === "new")
     return (
       <>
         <PageHeader title={sv.chores.new} />
-        <ChoreForm />
+        <ChoreForm families={families} />
       </>
     );
   const chore = isUuid(id) ? await getChore(db, id) : null;
@@ -31,7 +33,7 @@ async function Editor({ params }: Pick<PageProps<"/admin/chores/[id]">, "params"
   return (
     <>
       <PageHeader title={sv.chores.edit} />
-      <ChoreForm chore={chore} />
+      <ChoreForm chore={chore} families={families} />
     </>
   );
 }

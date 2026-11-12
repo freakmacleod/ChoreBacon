@@ -59,7 +59,7 @@ async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]"
     );
   const detail = isUuid(id) ? await getFamilyDetail(db, id) : null;
   if (!detail) notFound();
-  const { family, members, ownChores, ownRewards, choreChanges, rewardChanges } = detail;
+  const { family, members, ownChores, ownRewards, ownAchievements, choreChanges, rewardChanges } = detail;
   const { error } = await searchParams;
   const freeUsers = await usersWithoutFamily(db);
 
@@ -128,6 +128,8 @@ async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]"
         <FamilyForm family={family} />
       </section>
 
+      <p className="mt-8 text-sm text-zinc-500">{familySv.addItemsHint}</p>
+
       <Section title={familySv.ownChoresSection} empty={ownChores.length === 0}>
         <table className={tableClass}>
           <thead>
@@ -141,7 +143,11 @@ async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]"
           <tbody>
             {ownChores.map((c) => (
               <tr key={c.id}>
-                <td>{c.title}</td>
+                <td>
+                  <Link href={`/admin/chores/${c.id}`} className="hover:underline">
+                    {c.title}
+                  </Link>
+                </td>
                 <td>{c.points}</td>
                 <td>{sv.chores.frequencies[c.frequency]}</td>
                 <td>
@@ -166,11 +172,44 @@ async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]"
           <tbody>
             {ownRewards.map((r) => (
               <tr key={r.id}>
-                <td>{r.title}</td>
+                <td>
+                  <Link href={`/admin/rewards/${r.id}`} className="hover:underline">
+                    {r.title}
+                  </Link>
+                </td>
                 <td>{r.cost}</td>
                 <td>{r.stock ?? familySv.unlimited}</td>
                 <td>
                   <StatusBadge active={r.isActive} labels={sv.common} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Section>
+
+      <Section title={familySv.ownAchievementsSection} empty={ownAchievements.length === 0}>
+        <table className={tableClass}>
+          <thead>
+            <tr>
+              <th>{sv.common.title}</th>
+              <th>{sv.achievements.rule}</th>
+              <th>{sv.achievements.threshold}</th>
+              <th>{sv.common.status}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ownAchievements.map((a) => (
+              <tr key={a.id}>
+                <td>
+                  <Link href={`/admin/achievements/${a.id}`} className="hover:underline">
+                    {a.title}
+                  </Link>
+                </td>
+                <td>{sv.achievements.rules[a.ruleType]}</td>
+                <td>{a.threshold}</td>
+                <td>
+                  <StatusBadge active={a.isActive} labels={sv.common} />
                 </td>
               </tr>
             ))}

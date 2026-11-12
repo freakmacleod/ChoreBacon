@@ -39,6 +39,7 @@ async function FamilyTable() {
           <th>{familySv.approval}</th>
           <th>{familySv.ownChores}</th>
           <th>{familySv.ownRewards}</th>
+          <th>{familySv.ownAchievements}</th>
           <th>{familySv.changes}</th>
           <th>{familySv.created}</th>
         </tr>
@@ -56,6 +57,7 @@ async function FamilyTable() {
             <td>{f.requiresApproval ? familySv.on : familySv.off}</td>
             <td>{f.ownChores}</td>
             <td>{f.ownRewards}</td>
+            <td>{f.ownAchievements}</td>
             <td>{f.changes}</td>
             <td className="whitespace-nowrap">{formatDate(f.createdAt)}</td>
           </tr>
