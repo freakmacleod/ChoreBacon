@@ -16,4 +16,7 @@ public interface IChoreBaconApi
     Task<IReadOnlyList<RewardDto>> GetRewardsAsync(CancellationToken cancellationToken);
     Task<RedeemRewardResponse> RedeemRewardAsync(Guid rewardId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken);
+
+    /// <summary>Deletes (anonymises) the signed-in account. 409 <c>last_parent</c> while the user is their family's only parent.</summary>
+    Task DeleteAccountAsync(CancellationToken cancellationToken);
 }

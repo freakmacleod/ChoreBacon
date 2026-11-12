@@ -21,4 +21,8 @@ public interface IAuthService
     Task<bool> TryRestoreSessionAsync(CancellationToken cancellationToken = default);
 
     Task LogoutAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes the account on the server, then forgets the local session.</summary>
+    /// <exception cref="Api.ApiException">The server refused (e.g. <c>last_parent</c>); the user stays signed in.</exception>
+    Task DeleteAccountAsync(CancellationToken cancellationToken = default);
 }

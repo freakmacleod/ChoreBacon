@@ -28,4 +28,7 @@ public sealed class ChoreBaconApiClient(HttpClient http) : ApiClientBase(http), 
 
     public async Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken) =>
         await GetAsync("api/v1/achievements", Json.ListAchievementDto, cancellationToken);
+
+    public Task DeleteAccountAsync(CancellationToken cancellationToken) =>
+        SendAsync(HttpMethod.Delete, "api/v1/me", content: null, cancellationToken);
 }

@@ -1,5 +1,6 @@
 using ChoreBacon.Contracts.Auth;
 using ChoreBacon.Resources.Strings;
+using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
 using ChoreBacon.Services.Ui;
@@ -12,6 +13,8 @@ public partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _auth;
     private readonly INavigator _navigator;
+    private readonly IBrowser _browser;
+    private readonly ApiConfig _config;
 
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
@@ -29,10 +32,12 @@ public partial class LoginViewModel : BaseViewModel
     public bool IsDevLoginAvailable => false;
 #endif
 
-    public LoginViewModel(IAuthService auth, INavigator navigator)
+    public LoginViewModel(IAuthService auth, INavigator navigator, IBrowser browser, ApiConfig config)
     {
         _auth = auth;
         _navigator = navigator;
+        _browser = browser;
+        _config = config;
         Title = AppResources.Login_Title;
     }
 
@@ -50,6 +55,9 @@ public partial class LoginViewModel : BaseViewModel
             IsRestoring = false;
         }
     }
+
+    [RelayCommand]
+    private Task OpenPrivacyPolicyAsync() => _browser.OpenAsync(_config.PrivacyPolicyUri, BrowserLaunchMode.SystemPreferred);
 
     [RelayCommand]
     private Task LoginWithGoogleAsync(CancellationToken cancellationToken) =>

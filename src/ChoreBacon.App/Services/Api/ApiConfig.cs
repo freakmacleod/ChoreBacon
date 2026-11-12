@@ -22,6 +22,9 @@ public sealed class ApiConfig
 
     public Uri AuthStartUri(string provider) => new(BaseAddress, $"api/v1/auth/{provider}/start");
 
+    /// <summary>The privacy policy page served by the same deployment.</summary>
+    public Uri PrivacyPolicyUri => new(BaseAddress, "integritet");
+
     public static ApiConfig FromAssemblyMetadata()
     {
         var value = typeof(ApiConfig).Assembly

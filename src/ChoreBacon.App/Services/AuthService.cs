@@ -120,6 +120,14 @@ public class AuthService(
         }
     }
 
+    public async Task DeleteAccountAsync(CancellationToken cancellationToken = default)
+    {
+        await api.DeleteAccountAsync(cancellationToken);
+        // The server already revoked every session, so there is nothing to log out from.
+        await tokens.ClearAsync();
+        CurrentUser = null;
+    }
+
     private async Task<MeResponse> CompleteSignInAsync(CancellationToken cancellationToken)
     {
         MeResponse me;

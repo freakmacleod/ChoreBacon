@@ -10,6 +10,7 @@
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="{x:Static strings:AppResources.Dashboard_Logout}" Command="{Binding LogoutCommand}" />
+        <ToolbarItem Text="{x:Static strings:AppResources.Dashboard_DeleteAccount}" Command="{Binding DeleteAccountCommand}" Order="Secondary" />
     </ContentPage.ToolbarItems>
 
     <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">

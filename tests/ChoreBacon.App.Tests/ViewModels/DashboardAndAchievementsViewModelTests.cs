@@ -1,5 +1,6 @@
 using ChoreBacon.App.Tests.Fakes;
 using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Ui;
 using ChoreBacon.ViewModels;
 
@@ -16,7 +17,7 @@ public class DashboardViewModelTests
     {
         var achievement = Dto.Achievement(unlockedAt: DateTimeOffset.UtcNow);
         _api.OnGetProgress = () => Task.FromResult(Dto.Progress(balance: 15, lifetime: 120, streak: 3, done: 2, total: 8, achievement));
-        var vm = new DashboardViewModel(_api, _auth, _navigator);
+        var vm = new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs());
 
         await vm.LoadCommand.ExecuteAsync(null);
 
@@ -26,9 +27,33 @@ public class DashboardViewModelTests
     }
 
     [Fact]
+    public async Task Deleting_the_account_asks_first_then_shows_login()
+    {
+        await new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs(answer: false)).DeleteAccountCommand.ExecuteAsync(null);
+        Assert.Equal(0, _auth.Deletions);
+
+        await new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs(answer: true)).DeleteAccountCommand.ExecuteAsync(null);
+        Assert.Equal(1, _auth.Deletions);
+        Assert.Equal([Routes.Login], _navigator.Routes);
+    }
+
+    [Fact]
+    public async Task The_last_parent_is_told_to_hand_over_before_deleting()
+    {
+        _auth.OnDeleteAccount = () => throw new ApiException(System.Net.HttpStatusCode.Conflict, ChoreBacon.Contracts.Family.FamilyErrorCodes.LastParent, "");
+        var vm = new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs(answer: true));
+
+        await vm.DeleteAccountCommand.ExecuteAsync(null);
+
+        Assert.Equal(ChoreBacon.Resources.Strings.AppResources.Error_LastParent, vm.ErrorMessage);
+        Assert.Empty(_navigator.Routes);
+        Assert.NotNull(_auth.CurrentUser);
+    }
+
+    [Fact]
     public async Task Logout_ends_the_session_and_shows_login()
     {
-        var vm = new DashboardViewModel(_api, _auth, _navigator);
+        var vm = new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs());
 
         await vm.LogoutCommand.ExecuteAsync(null);
 

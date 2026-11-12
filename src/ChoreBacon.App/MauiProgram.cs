@@ -28,6 +28,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton(SecureStorage.Default);
         builder.Services.AddSingleton(WebAuthenticator.Default);
+        builder.Services.AddSingleton(Browser.Default);
 
         // ── API + auth ────────────────────────────────────────────────────────
         var apiConfig = ApiConfig.FromAssemblyMetadata();

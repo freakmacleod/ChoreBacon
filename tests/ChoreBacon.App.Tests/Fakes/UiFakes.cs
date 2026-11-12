@@ -37,11 +37,20 @@ internal sealed class FakeAuthService : IAuthService
     public MeResponse? CurrentUser { get; set; } = new(Make.Me, "google", "Anna Andersson", null, "user");
     public bool IsLoggedIn => CurrentUser is not null;
     public int Logouts { get; private set; }
+    public Func<Task> OnDeleteAccount { get; set; } = () => Task.CompletedTask;
+    public int Deletions { get; private set; }
 
     public Task<MeResponse?> LoginWithGoogleAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public Task<MeResponse?> LoginWithFacebookAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public Task<MeResponse> LoginAsDevAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public Task<bool> TryRestoreSessionAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+    public async Task DeleteAccountAsync(CancellationToken cancellationToken = default)
+    {
+        await OnDeleteAccount();
+        Deletions++;
+        CurrentUser = null;
+    }
 
     public Task LogoutAsync(CancellationToken cancellationToken = default)
     {
