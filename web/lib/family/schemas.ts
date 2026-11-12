@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { isKnownIcon } from "../icons";
 
 // JSON bodies of the family endpoints (validated with Zod, like every request body).
 
 const title = z.string().trim().min(1).max(100);
 const description = z.string().trim().max(500).default("");
-const icon = z.string().trim().regex(/^[a-z0-9_]{1,40}$/);
+// Only icons from the shared set (the app picks from the same file), like the admin.
+const icon = z.string().trim().refine(isKnownIcon, { error: "Unknown icon" });
 const stock = z.number().int().min(0).max(1_000_000).nullable();
 
 export const createFamilyBody = z.object({ name: z.string().trim().min(1).max(60) });
