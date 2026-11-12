@@ -57,6 +57,8 @@
                                            Opacity="{Binding IsUnlocked, Converter={StaticResource BoolToOpacityConverter}}" />
                                     <Label Text="{Binding Achievement.Description}"
                                            FontSize="13" TextColor="Gray" />
+                                    <Label Text="{x:Static strings:AppResources.Common_FamilyItem}" FontSize="11"
+                                           TextColor="{AppThemeBinding Light=#9C27B0, Dark=#CE93D8}" IsVisible="{Binding Achievement.IsFamilyItem}" />
                                     <Label Text="{Binding Achievement.BonusPoints, StringFormat={x:Static strings:AppResources.Achievements_Bonus}}"
                                            FontSize="12"
                                            TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}"

@@ -104,10 +104,13 @@ public class ChoreBaconApiClientTests
     [Fact]
     public async Task Achievements_and_progress_are_read()
     {
-        var locked = Achievement.Replace("\"2026-11-11T17:43:51.123Z\"", "null");
+        var locked = Achievement.Replace("\"2026-11-11T17:43:51.123Z\"", "null").Replace("\"rarity\"", "\"isFamilyItem\":true,\"rarity\"");
         var achievements = await Client(HttpStatusCode.OK, $"[{Achievement},{locked}]").GetAchievementsAsync(_ct);
         Assert.NotNull(achievements[0].UnlockedAt);
         Assert.Null(achievements[1].UnlockedAt);
+        // Older servers omit isFamilyItem: a global achievement.
+        Assert.False(achievements[0].IsFamilyItem);
+        Assert.True(achievements[1].IsFamilyItem);
 
         var progressJson = $$"""
             {"balance":10,"lifetimeEarned":10,"pointsSpent":0,"choresCompleted":1,"streakDays":1,
