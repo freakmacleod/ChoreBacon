@@ -1,12 +1,13 @@
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
-import { choreFamilySettings, chores, families, familyMembers, rewardFamilySettings, rewards, users } from "../../db/schema";
+import { achievements, choreFamilySettings, chores, families, familyMembers, rewardFamilySettings, rewards, users } from "../../db/schema";
 import { formatInviteCode } from "../family/invite-code";
 import { unusedInviteCode } from "../family/service";
 
 // Admin view of families: who is in which family, and what each family has changed or added on top of
 // the global catalog. The admin can also create families and place users in them (e.g. to set up a
-// parent without the app); the catalog itself is still tailored by the parents in the app. The same
+// parent without the app), and add family-only items from the catalog pages; parents tailor the
+// global catalog for their family in the app. The same
 // rules as in the app hold: one family per user, and a family with members always keeps a parent.
 
 export const listFamilies = (exec: Executor) =>
@@ -20,10 +21,15 @@ export const listFamilies = (exec: Executor) =>
       parents: sql<string>`(select coalesce(string_agg(u.display_name, ', ' order by u.display_name), '') from family_members fm join users u on u.id = fm.user_id where fm.family_id = families.id and fm.role = 'parent')`,
       ownChores: sql<number>`(select count(*)::int from chores c where c.family_id = families.id)`,
       ownRewards: sql<number>`(select count(*)::int from rewards r where r.family_id = families.id)`,
+      ownAchievements: sql<number>`(select count(*)::int from achievements a where a.family_id = families.id)`,
       changes: sql<number>`(select count(*)::int from chore_family_settings s where s.family_id = families.id) + (select count(*)::int from reward_family_settings s where s.family_id = families.id)`,
     })
     .from(families)
     .orderBy(desc(families.createdAt));
+
+/** Families to pick from when creating a family-only chore, reward or achievement. */
+export const familyOptions = (exec: Executor) =>
+  exec.select({ id: families.id, name: families.name }).from(families).orderBy(asc(families.name));
 
 /** One family: members, its own chores and rewards, and its changes to global items. Null if not found. */
 export async function getFamilyDetail(exec: Executor, familyId: string) {
@@ -46,6 +52,11 @@ export async function getFamilyDetail(exec: Executor, familyId: string) {
 
   const ownChores = await exec.select().from(chores).where(eq(chores.familyId, familyId)).orderBy(desc(chores.isActive), asc(chores.title));
   const ownRewards = await exec.select().from(rewards).where(eq(rewards.familyId, familyId)).orderBy(desc(rewards.isActive), asc(rewards.cost));
+  const ownAchievements = await exec
+    .select()
+    .from(achievements)
+    .where(eq(achievements.familyId, familyId))
+    .orderBy(desc(achievements.isActive), asc(achievements.threshold));
 
   const choreChanges = await exec
     .select({
@@ -79,6 +90,7 @@ export async function getFamilyDetail(exec: Executor, familyId: string) {
     members,
     ownChores,
     ownRewards,
+    ownAchievements,
     choreChanges,
     rewardChanges,
   };
