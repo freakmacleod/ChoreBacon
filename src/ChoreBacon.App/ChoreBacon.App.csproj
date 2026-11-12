@@ -67,6 +67,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- The icon set is shared with the web admin's icon picker: one file, so both always agree. -->
+		<EmbeddedResource Include="..\..\web\lib\icons\catalog-icons.json" LogicalName="catalog-icons.json" Link="Resources\catalog-icons.json" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<!-- Strongly typed accessors (ChoreBacon.Resources.Strings.AppResources), generated at build time
 		     so it works from the CLI as well as in Visual Studio. -->
 		<EmbeddedResource Update="Resources\Strings\AppResources.resx"

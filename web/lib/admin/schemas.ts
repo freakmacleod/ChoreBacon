@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isKnownIcon } from "../icons";
 
 // Zod schemas for the admin forms (FormData → typed input). Messages are Swedish: they are shown
 // next to the fields.
@@ -17,6 +18,8 @@ const key = z
   .string({ error: "Obligatoriskt" })
   .trim()
   .regex(/^[a-z0-9_]{1,40}$/, { error: "Små bokstäver a–z, siffror och _ (högst 40)" });
+// Only icons from the shared set: anything else would show as a fallback glyph in the app.
+const icon = z.string({ error: "Välj en ikon" }).trim().refine(isKnownIcon, { error: "Välj en ikon" });
 
 export const FREQUENCIES = ["daily", "weekly", "monthly", "once"] as const;
 export const ACHIEVEMENT_RULES = ["chores_completed", "lifetime_points_earned", "streak_days", "points_spent"] as const;
@@ -25,7 +28,7 @@ export const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"] as c
 export const choreInput = z.object({
   title: required(100),
   description: text(500).default(""),
-  icon: key,
+  icon,
   points: int(1, 10_000),
   frequency: z.enum(FREQUENCIES, { error: "Välj hur ofta" }),
   isActive: checkbox,
@@ -34,7 +37,7 @@ export const choreInput = z.object({
 export const rewardInput = z.object({
   title: required(100),
   description: text(500).default(""),
-  icon: key,
+  icon,
   cost: int(1, 1_000_000),
   // No stock here: global rewards are unlimited; stock is counted per family (set by parents).
   isActive: checkbox,
@@ -44,7 +47,7 @@ export const achievementInput = z.object({
   code: key,
   title: required(100),
   description: text(500).default(""),
-  icon: key,
+  icon,
   ruleType: z.enum(ACHIEVEMENT_RULES, { error: "Välj regel" }),
   threshold: int(1, 10_000_000),
   bonusPoints: int(0, 100_000),

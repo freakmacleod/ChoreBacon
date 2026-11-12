@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import type { IconKind } from "@/lib/icons";
 import { type FormState, saveAchievement, saveChore, saveReward } from "../actions";
 import { sv } from "../strings";
+import { IconPicker } from "./icon-picker";
 import { Field, buttonClass, inputClass, secondaryButtonClass } from "./ui";
 
 type Chore = { id: string; title: string; description: string; icon: string; points: number; frequency: string; isActive: boolean };
@@ -37,7 +39,15 @@ function Actions({ pending, back, error }: { pending: boolean; back: string; err
   );
 }
 
-function Common({ item, errors }: { item?: { title: string; description: string; icon: string; isActive: boolean }; errors: FormState["errors"] }) {
+function Common({
+  kind,
+  item,
+  errors,
+}: {
+  kind: IconKind;
+  item?: { title: string; description: string; icon: string; isActive: boolean };
+  errors: FormState["errors"];
+}) {
   return (
     <>
       <Field label={sv.common.title} name="title" error={errors?.title}>
@@ -46,9 +56,7 @@ function Common({ item, errors }: { item?: { title: string; description: string;
       <Field label={sv.common.description} name="description" error={errors?.description}>
         <textarea id="description" name="description" defaultValue={item?.description} maxLength={500} rows={2} className={inputClass} />
       </Field>
-      <Field label={sv.common.icon} name="icon" error={errors?.icon}>
-        <input id="icon" name="icon" defaultValue={item?.icon} required pattern="[a-z0-9_]{1,40}" className={inputClass} />
-      </Field>
+      <IconPicker kind={kind} selected={item?.icon} error={errors?.icon} />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="isActive" defaultChecked={item?.isActive ?? true} />
         {sv.common.active}
@@ -69,7 +77,7 @@ export function ChoreForm({ chore }: { chore?: Chore }) {
   return (
     <form action={action} className="max-w-lg space-y-4">
       <input type="hidden" name="id" value={chore?.id ?? ""} />
-      <Common item={chore} errors={state.errors} />
+      <Common kind="chore" item={chore} errors={state.errors} />
       <Field label={sv.chores.points} name="points" error={state.errors?.points}>
         <input id="points" name="points" type="number" min={1} defaultValue={chore?.points ?? 10} required className={inputClass} />
       </Field>
@@ -88,7 +96,7 @@ export function RewardForm({ reward }: { reward?: Reward }) {
   return (
     <form action={action} className="max-w-lg space-y-4">
       <input type="hidden" name="id" value={reward?.id ?? ""} />
-      <Common item={reward} errors={state.errors} />
+      <Common kind="reward" item={reward} errors={state.errors} />
       <Field label={sv.rewards.cost} name="cost" error={state.errors?.cost}>
         <input id="cost" name="cost" type="number" min={1} defaultValue={reward?.cost ?? 50} required className={inputClass} />
       </Field>
@@ -106,7 +114,7 @@ export function AchievementForm({ achievement }: { achievement?: Achievement }) 
       <Field label={sv.achievements.code} name="code" error={state.errors?.code}>
         <input id="code" name="code" defaultValue={achievement?.code} required pattern="[a-z0-9_]{1,40}" className={inputClass} />
       </Field>
-      <Common item={achievement} errors={state.errors} />
+      <Common kind="achievement" item={achievement} errors={state.errors} />
       <Field label={sv.achievements.rule} name="ruleType" error={state.errors?.ruleType}>
         <select id="ruleType" name="ruleType" defaultValue={achievement?.ruleType ?? "chores_completed"} className={inputClass}>
           {options(sv.achievements.rules)}

@@ -22,7 +22,7 @@ describe("admin form validation", () => {
     if (parsed.ok) return;
     expect(parsed.errors).toMatchObject({
       title: "Obligatoriskt",
-      icon: expect.stringContaining("Små bokstäver"),
+      icon: "Välj en ikon",
       points: "Minst 1",
       frequency: "Välj hur ofta",
     });
@@ -42,13 +42,21 @@ describe("admin form validation", () => {
   it("validates achievement rule, rarity and bonus", () => {
     const ok = parseForm(
       achievementInput,
-      form({ code: "chores_25", title: "25", icon: "ach_25", ruleType: "chores_completed", threshold: "25", bonusPoints: "0", rarity: "rare" }),
+      form({ code: "chores_25", title: "25", icon: "ach_star", ruleType: "chores_completed", threshold: "25", bonusPoints: "0", rarity: "rare" }),
     );
     expect(ok.ok).toBe(true);
     const bad = parseForm(
       achievementInput,
       form({ code: "x", title: "x", icon: "x", ruleType: "balance", threshold: "1", bonusPoints: "-5", rarity: "mythic" }),
     );
-    expect(bad.ok ? {} : Object.keys(bad.errors).sort()).toEqual(["bonusPoints", "rarity", "ruleType"]);
+    expect(bad.ok ? {} : Object.keys(bad.errors).sort()).toEqual(["bonusPoints", "icon", "rarity", "ruleType"]);
+  });
+
+  it("only accepts icons from the shared icon set", () => {
+    const withIcon = (icon: string) => parseForm(rewardInput, form({ title: "Glass", icon, cost: "10" }));
+    expect(withIcon("reward_icecream").ok).toBe(true);
+    // Any kind's icon is fine; a well-formed but unknown key is not.
+    expect(withIcon("dishes").ok).toBe(true);
+    expect(withIcon("reward_unicorn_rides")).toMatchObject({ ok: false, errors: { icon: "Välj en ikon" } });
   });
 });

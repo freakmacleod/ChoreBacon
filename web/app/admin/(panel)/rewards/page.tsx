@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listRewards } from "@/lib/admin/catalog";
+import { iconGlyph } from "@/lib/icons";
 import { setRewardActive } from "../../actions";
 import { ActiveToggle } from "../../_components/ActiveToggle";
 import { PageHeader, StatusBadge, buttonClass, tableClass } from "../../_components/ui";
@@ -46,7 +47,9 @@ async function RewardTable() {
               {reward.description && <div className="text-xs text-zinc-500">{reward.description}</div>}
             </td>
             <td>{reward.cost}</td>
-            <td className="font-mono text-xs">{reward.icon}</td>
+            <td className="text-xl" title={reward.icon}>
+              {iconGlyph(reward.icon)}
+            </td>
             <td>
               <StatusBadge active={reward.isActive} labels={sv.common} />
             </td>
