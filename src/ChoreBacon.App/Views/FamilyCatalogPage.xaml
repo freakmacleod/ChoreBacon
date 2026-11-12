@@ -2,10 +2,39 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:ChoreBacon.ViewModels"
+             xmlns:helpers="clr-namespace:ChoreBacon.Helpers"
              xmlns:strings="clr-namespace:ChoreBacon.Resources.Strings"
              x:Class="ChoreBacon.Views.FamilyCatalogPage"
              x:DataType="vm:FamilyCatalogViewModel"
              Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <!-- One pickable icon; the Selected state marks the chosen one. -->
+        <DataTemplate x:Key="IconChoiceTemplate" x:DataType="helpers:IconOption">
+            <Border WidthRequest="50" HeightRequest="50" StrokeThickness="2" SemanticProperties.Description="{Binding Label}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="Stroke" Value="Transparent" />
+                                <Setter Property="BackgroundColor" Value="Transparent" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Selected">
+                            <VisualState.Setters>
+                                <Setter Property="Stroke" Value="#FF6B35" />
+                                <Setter Property="BackgroundColor" Value="#33FF6B35" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+                <Label Text="{Binding Glyph}" FontSize="26" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="12">
@@ -57,6 +86,13 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static strings:AppResources.Catalog_NewChore}" FontAttributes="Bold" />
                     <Entry Text="{Binding NewChoreTitle}" Placeholder="{x:Static strings:AppResources.Catalog_NamePlaceholder}" MaxLength="100" />
+                    <Label Text="{x:Static strings:AppResources.Catalog_PickIcon}" FontSize="12" TextColor="Gray" />
+                    <CollectionView ItemsSource="{Binding ChoreIcons}" ItemTemplate="{StaticResource IconChoiceTemplate}"
+                                    SelectionMode="Single" SelectedItem="{Binding NewChoreIcon}" HeightRequest="56">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" />
+                        </CollectionView.ItemsLayout>
+                    </CollectionView>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Entry Text="{Binding NewChorePoints}" Placeholder="{x:Static strings:AppResources.Catalog_PointsPlaceholder}" Keyboard="Numeric" />
                         <Picker Grid.Column="1" ItemsSource="{Binding Frequencies}" SelectedIndex="{Binding NewChoreFrequency}" />
@@ -107,6 +143,13 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{x:Static strings:AppResources.Catalog_NewReward}" FontAttributes="Bold" />
                     <Entry Text="{Binding NewRewardTitle}" Placeholder="{x:Static strings:AppResources.Catalog_NamePlaceholder}" MaxLength="100" />
+                    <Label Text="{x:Static strings:AppResources.Catalog_PickIcon}" FontSize="12" TextColor="Gray" />
+                    <CollectionView ItemsSource="{Binding RewardIcons}" ItemTemplate="{StaticResource IconChoiceTemplate}"
+                                    SelectionMode="Single" SelectedItem="{Binding NewRewardIcon}" HeightRequest="56">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" />
+                        </CollectionView.ItemsLayout>
+                    </CollectionView>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Entry Text="{Binding NewRewardCost}" Placeholder="{x:Static strings:AppResources.Catalog_CostPlaceholder}" Keyboard="Numeric" />
                         <Entry Grid.Column="1" Text="{Binding NewRewardStock}" Placeholder="{x:Static strings:AppResources.Catalog_Stock}" Keyboard="Numeric" />

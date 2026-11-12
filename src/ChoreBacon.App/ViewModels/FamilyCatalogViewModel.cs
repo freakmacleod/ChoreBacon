@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ChoreBacon.Contracts.Family;
 using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Helpers;
 using ChoreBacon.Resources.Strings;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Ui;
@@ -31,6 +32,9 @@ public partial class FamilyCatalogViewModel : ApiViewModel
     public partial int NewChoreFrequency { get; set; }
 
     [ObservableProperty]
+    public partial IconOption? NewChoreIcon { get; set; }
+
+    [ObservableProperty]
     public partial string NewRewardTitle { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -38,6 +42,12 @@ public partial class FamilyCatalogViewModel : ApiViewModel
 
     [ObservableProperty]
     public partial string NewRewardStock { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial IconOption? NewRewardIcon { get; set; }
+
+    public IReadOnlyList<IconOption> ChoreIcons { get; } = IconGlyphs.Choices(IconGlyphs.Chores);
+    public IReadOnlyList<IconOption> RewardIcons { get; } = IconGlyphs.Choices(IconGlyphs.Rewards);
 
     public ObservableCollection<FamilyChoreItemViewModel> Chores { get; } = [];
     public ObservableCollection<FamilyRewardItemViewModel> Rewards { get; } = [];
@@ -97,10 +107,12 @@ public partial class FamilyCatalogViewModel : ApiViewModel
         if (!TryParseOptional(NewChorePoints, min: 1, out var points) || points is null) return Invalid(AppResources.Catalog_InvalidNumber);
         var title = NewChoreTitle.Trim();
         var frequency = (ChoreFrequency)Math.Clamp(NewChoreFrequency, 0, Frequencies.Count - 1);
+        var icon = NewChoreIcon?.Key ?? IconGlyphs.FallbackKey(IconGlyphs.Chores);
         return RunAsync(async () =>
         {
-            await _api.CreateFamilyChoreAsync(new FamilyChoreRequest(title, "", "chore_default", points.Value, frequency, true), cancellationToken);
+            await _api.CreateFamilyChoreAsync(new FamilyChoreRequest(title, "", icon, points.Value, frequency, true), cancellationToken);
             NewChoreTitle = NewChorePoints = string.Empty;
+            NewChoreIcon = null;
             await ReloadAsync(cancellationToken);
             StatusMessage = string.Format(AppResources.Catalog_Added, title);
         }, cancellationToken);
@@ -114,10 +126,12 @@ public partial class FamilyCatalogViewModel : ApiViewModel
         if (!TryParseOptional(NewRewardCost, min: 1, out var cost) || cost is null) return Invalid(AppResources.Catalog_InvalidNumber);
         if (!TryParseOptional(NewRewardStock, min: 0, out var stock)) return Invalid(AppResources.Catalog_InvalidStock);
         var title = NewRewardTitle.Trim();
+        var icon = NewRewardIcon?.Key ?? IconGlyphs.FallbackKey(IconGlyphs.Rewards);
         return RunAsync(async () =>
         {
-            await _api.CreateFamilyRewardAsync(new FamilyRewardRequest(title, "", "reward_default", cost.Value, stock, true), cancellationToken);
+            await _api.CreateFamilyRewardAsync(new FamilyRewardRequest(title, "", icon, cost.Value, stock, true), cancellationToken);
             NewRewardTitle = NewRewardCost = NewRewardStock = string.Empty;
+            NewRewardIcon = null;
             await ReloadAsync(cancellationToken);
             StatusMessage = string.Format(AppResources.Catalog_Added, title);
         }, cancellationToken);

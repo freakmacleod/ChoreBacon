@@ -2,6 +2,7 @@ using System.Net;
 using ChoreBacon.App.Tests.Fakes;
 using ChoreBacon.Contracts.Family;
 using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Helpers;
 using ChoreBacon.Resources.Strings;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Ui;
@@ -278,6 +279,35 @@ public class FamilyCatalogViewModelTests
         Assert.Equal(new FamilyChoreRequest("Bära in ved", "", "chore_default", 7, ChoreFrequency.Weekly, true), api.CreatedChores.Single());
         Assert.Equal(new FamilyRewardRequest("Bio", "", "reward_default", 40, null, true), api.CreatedRewards.Single());
         Assert.Equal(string.Empty, vm.NewChoreTitle);
+    }
+
+    [Fact]
+    public async Task A_picked_icon_is_sent_and_reset_after_adding()
+    {
+        var api = new FakeFamilyApi();
+        var vm = new FamilyCatalogViewModel(api, new FakeNavigator()) { NewChoreTitle = "Rasta hunden", NewChorePoints = "15" };
+        vm.NewChoreIcon = vm.ChoreIcons.Single(icon => icon.Key == "dog_walk");
+        vm.NewRewardTitle = "Glass";
+        vm.NewRewardCost = "30";
+        vm.NewRewardIcon = vm.RewardIcons.Single(icon => icon.Key == "reward_icecream");
+
+        await vm.AddChoreCommand.ExecuteAsync(null);
+        await vm.AddRewardCommand.ExecuteAsync(null);
+
+        Assert.Equal("dog_walk", api.CreatedChores.Single().Icon);
+        Assert.Equal("reward_icecream", api.CreatedRewards.Single().Icon);
+        Assert.Null(vm.NewChoreIcon);
+        Assert.Null(vm.NewRewardIcon);
+    }
+
+    [Fact]
+    public void Parents_pick_from_the_icons_of_the_item_kind()
+    {
+        var vm = new FamilyCatalogViewModel(new FakeFamilyApi(), new FakeNavigator());
+        Assert.Contains(vm.ChoreIcons, icon => icon.Key == "dishes");
+        Assert.DoesNotContain(vm.ChoreIcons, icon => icon.Key.StartsWith("reward_", StringComparison.Ordinal));
+        Assert.All(vm.RewardIcons, icon => Assert.StartsWith("reward_", icon.Key));
+        Assert.All(vm.ChoreIcons, icon => Assert.Equal(IconGlyphs.For(icon.Key), icon.Glyph));
     }
 
     [Fact]

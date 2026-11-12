@@ -13,7 +13,19 @@ public static class IconGlyphs
 {
     public const string Default = "⭐";
 
+    public const string Chores = "chore";
+    public const string Rewards = "reward";
+
+    private static readonly Lazy<IReadOnlyList<IconGroup>> Groups = new(LoadGroups);
     private static readonly Lazy<IReadOnlyDictionary<string, string>> Glyphs = new(Load);
+
+    /// <summary>The icons a parent can pick for a new item of this kind (<see cref="Chores"/> or <see cref="Rewards"/>).</summary>
+    public static IReadOnlyList<IconOption> Choices(string kind) =>
+        Groups.Value.Where(group => group.Kind == kind).SelectMany(group => group.Icons)
+            .Select(icon => new IconOption(icon.Key, icon.Glyph, icon.Label)).ToList();
+
+    /// <summary>The icon a new item of this kind gets when none is picked.</summary>
+    public static string FallbackKey(string kind) => Groups.Value.Single(group => group.Kind == kind).Fallback;
 
     public static string For(string? key)
     {
@@ -28,15 +40,21 @@ public static class IconGlyphs
         };
     }
 
-    internal static IReadOnlyDictionary<string, string> Load()
+    internal static IReadOnlyDictionary<string, string> Load() =>
+        Groups.Value.SelectMany(group => group.Icons).ToDictionary(icon => icon.Key, icon => icon.Glyph);
+
+    private static IReadOnlyList<IconGroup> LoadGroups()
     {
         using var stream = typeof(IconGlyphs).Assembly.GetManifestResourceStream("catalog-icons.json")
             ?? throw new InvalidOperationException("The embedded icon set catalog-icons.json is missing.");
         var file = JsonSerializer.Deserialize(stream, IconJsonContext.Default.IconFile)
             ?? throw new InvalidOperationException("The embedded icon set catalog-icons.json is empty.");
-        return file.Groups.SelectMany(group => group.Icons).ToDictionary(icon => icon.Key, icon => icon.Glyph);
+        return file.Groups;
     }
 }
+
+/// <summary>One pickable icon: the key that is stored, the glyph that is shown, and a label for screen readers.</summary>
+public sealed record IconOption(string Key, string Glyph, string Label);
 
 internal sealed record IconFile(IReadOnlyList<IconGroup> Groups);
 
