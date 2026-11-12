@@ -40,7 +40,12 @@ const achievementColumns = {
   threshold: achievements.threshold,
   bonusPoints: achievements.bonusPoints,
   rarity: achievements.rarity,
+  isFamilyItem: sql<boolean>`${achievements.familyId} is not null`,
 };
+
+/** Global achievements, plus the family's own for its members. */
+const achievementsFor = (familyId: string | null) =>
+  familyId ? or(isNull(achievements.familyId), eq(achievements.familyId, familyId)) : isNull(achievements.familyId);
 
 export type UnlockedAchievement = Awaited<ReturnType<typeof unlockAchievements>>[number];
 
@@ -72,7 +77,11 @@ export async function loadStats(exec: Executor, userId: string, now: Date): Prom
 
 /** Unlocks every achievement the user now qualifies for and books their bonus points. Call inside a transaction. */
 async function unlockAchievements(tx: Executor, userId: string, now: Date) {
-  const all = await tx.select(achievementColumns).from(achievements).where(eq(achievements.isActive, true));
+  const familyId = (await membershipOf(tx, userId))?.familyId ?? null;
+  const all = await tx
+    .select(achievementColumns)
+    .from(achievements)
+    .where(and(eq(achievements.isActive, true), achievementsFor(familyId)));
   const owned = await tx
     .select({ id: userAchievements.achievementId })
     .from(userAchievements)
@@ -361,8 +370,12 @@ export async function redeemReward(exec: Executor, userId: string, rewardId: str
 
 // ── Achievements and summary ─────────────────────────────────────────────────
 
-/** Active achievements plus any inactive ones the user already unlocked, with unlock time (null = locked). */
-export function listAchievements(exec: Executor, userId: string) {
+/**
+ * Active achievements the user can unlock (global, and their family's own) plus any they already unlocked
+ * (even if inactive, or from a family they have left), with unlock time (null = locked).
+ */
+export async function listAchievements(exec: Executor, userId: string) {
+  const familyId = (await membershipOf(exec, userId))?.familyId ?? null;
   return exec
     .select({ ...achievementColumns, unlockedAt: userAchievements.unlockedAt })
     .from(achievements)
@@ -370,7 +383,7 @@ export function listAchievements(exec: Executor, userId: string) {
       userAchievements,
       and(eq(userAchievements.achievementId, achievements.id), eq(userAchievements.userId, userId)),
     )
-    .where(or(eq(achievements.isActive, true), isNotNull(userAchievements.unlockedAt)))
+    .where(or(and(eq(achievements.isActive, true), achievementsFor(familyId)), isNotNull(userAchievements.unlockedAt)))
     .orderBy(asc(RARITY_ORDER), asc(achievements.threshold), asc(achievements.title));
 }
 

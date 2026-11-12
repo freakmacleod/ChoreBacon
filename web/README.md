@@ -64,7 +64,7 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, balance, unlockedAchievements }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
 | GET | `/api/v1/rewards` | Visible rewards; `stock` null = unlimited, 0 = sold out; `isFamilyItem` for the family's own |
 | POST | `/api/v1/rewards/{id}/redeem` | 201 `{ redemption, balance, unlockedAchievements }`; 409 `insufficient_points` / `reward_out_of_stock` |
-| GET | `/api/v1/achievements` | Active achievements (plus inactive ones the user has); `unlockedAt` null while locked |
+| GET | `/api/v1/achievements` | Active global achievements and the user's family's own (plus any the user already unlocked); `unlockedAt` null while locked, `isFamilyItem` |
 | POST | `/api/v1/families` | `{ name }` → 201 family; caller becomes parent. 409 `already_in_family` |
 | POST | `/api/v1/families/join` | `{ code }` → family; joins as child. 404 `invalid_invite_code`, 409 `already_in_family` |
 | GET / PATCH | `/api/v1/me/family` | Family with members and balances (`inviteCode` for parents only); PATCH `{ name?, requiresApproval? }` (parents). 404 `no_family` |
@@ -92,7 +92,8 @@ Implemented in `lib/progress/` (`rules.ts` pure, `service.ts` database):
 - **Redemption** (rule 4): one transaction locks the user, checks the balance, takes one from stock with
   `stock > 0`, writes the redemption and the ledger entry. Nothing restocks automatically (rule 5).
 - **Achievements** (rule 1): points achievements use lifetime earned points, never the balance. Bonuses are
-  ledger entries and can cascade into further points achievements.
+  ledger entries and can cascade into further points achievements. A family's own achievements are seen and
+  unlocked only by its current members (on the member's own stats); ones already unlocked stay after leaving.
 - **Streak**: consecutive Stockholm days with a completion, ending today or yesterday.
 - **Families** (one per user): the creator is a parent; others join with the invite code as children (a parent can
   promote them). Members see global items the family has not switched off, with its point/cost overrides, plus
@@ -117,7 +118,7 @@ transaction; they are skipped when that file is missing.
 
 ## Admin
 
-`/admin` is the admin GUI (Swedish): global chores, rewards and achievements, and the user list.
+`/admin` is the admin GUI (Swedish): chores, rewards and achievements (global or one family's), families, and the user list.
 
 - **Sign-in:** the same Google/Facebook flow as the app, started with `/api/v1/auth/{provider}/start?client=admin`. The callback sets
   `cb_admin_session`, a signed HttpOnly cookie valid for 8 hours. Only users with role `admin` get one, and the role is re-read
@@ -132,7 +133,10 @@ transaction; they are skipped when that file is missing.
   parent or child), change roles and take members out, with the same rules as the app: one family per user, and a family
   with members always keeps a parent. The invite code is shown so someone can join from the app. Parents still tailor the
   catalog and approve chores in the app.
-- **Stock:** an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.
+- **Global or family:** each chore, reward and achievement is either global or belongs to one family, picked under
+  "Gäller" when it is created. It cannot be changed afterwards (make a new item and deactivate the old one instead).
+  The lists show the scope and can be filtered by it (`?scope=global` or a family id).
+- **Stock:** only family rewards have one (global rewards are unlimited); an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.
 - **Roles:** the first admin is granted with `npm run admin:grant -- --email … --production` after that person has signed in
   once. After that, use the Användare page. An admin cannot remove their own admin role.
 

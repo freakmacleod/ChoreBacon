@@ -93,7 +93,8 @@ public sealed record AchievementDto(
     int Threshold,
     int BonusPoints,
     AchievementRarity Rarity,
-    DateTimeOffset? UnlockedAt);
+    DateTimeOffset? UnlockedAt,
+    bool IsFamilyItem = false);
 
 /// <param name="LifetimeEarned">All points ever earned; spending never lowers it.</param>
 public sealed record ProgressResponse(

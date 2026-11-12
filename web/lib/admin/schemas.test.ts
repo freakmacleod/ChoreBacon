@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { achievementInput, choreInput, familyInput, familyMemberInput, parseForm, rewardInput } from "./schemas";
+import { achievementInput, choreInput, familyInput, familyMemberInput, parseForm, rewardInput, scopeInput } from "./schemas";
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -33,10 +33,21 @@ describe("admin form validation", () => {
     expect(parsed.ok || parsed.errors.points).toBe("Ange ett heltal");
   });
 
-  it("parses a global reward without stock (global rewards are unlimited)", () => {
+  it("parses a reward's stock: empty is unlimited (whether a global reward may have one is checked on save)", () => {
     const parsed = parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "100", stock: "3", isActive: "on" }));
-    expect(parsed).toEqual({ ok: true, data: { title: "Glass", description: "", icon: "reward_icecream", cost: 100, isActive: true } });
+    expect(parsed).toEqual({ ok: true, data: { title: "Glass", description: "", icon: "reward_icecream", cost: 100, stock: 3, isActive: true } });
+    expect(parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "10", stock: "" }))).toMatchObject({ ok: true, data: { stock: null } });
+    expect(parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "10" }))).toMatchObject({ ok: true, data: { stock: null } });
+    expect(parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "10", stock: "-1" })).ok).toBe(false);
     expect(parseForm(rewardInput, form({ title: "Glass", icon: "reward_icecream", cost: "0" })).ok).toBe(false);
+  });
+
+  it("parses the scope picked when creating an item", () => {
+    expect(parseForm(scopeInput, form({ scope: "global" }))).toEqual({ ok: true, data: { scope: null } });
+    const familyId = "0b9c4f1e-3a2d-4c5b-9e8f-7a6b5c4d3e2f";
+    expect(parseForm(scopeInput, form({ scope: familyId }))).toEqual({ ok: true, data: { scope: familyId } });
+    expect(parseForm(scopeInput, form({ scope: "family-x" }))).toMatchObject({ ok: false, errors: { scope: "Välj global eller en familj" } });
+    expect(parseForm(scopeInput, form({}))).toMatchObject({ ok: false });
   });
 
   it("validates achievement rule, rarity and bonus", () => {

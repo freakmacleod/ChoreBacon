@@ -39,7 +39,9 @@ export const rewardInput = z.object({
   description: text(500).default(""),
   icon,
   cost: int(1, 1_000_000),
-  // No stock here: global rewards are unlimited; stock is counted per family (set by parents).
+  // Only family rewards have a stock (global rewards are unlimited; families set their own stock for
+  // them in the app). Empty = unlimited.
+  stock: z.preprocess((value) => (value === "" || value === undefined ? null : value), int(0, 1_000_000).nullable()),
   isActive: checkbox,
 });
 
@@ -53,6 +55,13 @@ export const achievementInput = z.object({
   bonusPoints: int(0, 100_000),
   rarity: z.enum(RARITIES, { error: "Välj sällsynthet" }),
   isActive: checkbox,
+});
+
+/** Chosen once when an item is created: "global" or a family id. */
+export const scopeInput = z.object({
+  scope: z.union([z.literal("global").transform(() => null), z.uuid({ error: "Välj global eller en familj" })], {
+    error: "Välj global eller en familj",
+  }),
 });
 
 export const roleInput = z.object({ role: z.enum(["user", "admin"]) });

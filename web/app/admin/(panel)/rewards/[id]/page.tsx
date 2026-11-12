@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getReward } from "@/lib/admin/catalog";
+import { familyOptions } from "@/lib/admin/families";
 import { isUuid } from "@/lib/api";
 import { RewardForm } from "../../../_components/forms";
 import { PageHeader } from "../../../_components/ui";
@@ -19,11 +20,12 @@ export default function EditRewardPage({ params }: PageProps<"/admin/rewards/[id
 async function Editor({ params }: Pick<PageProps<"/admin/rewards/[id]">, "params">) {
   await requireAdmin();
   const { id } = await params;
+  const families = await familyOptions(db);
   if (id === "new")
     return (
       <>
         <PageHeader title={sv.rewards.new} />
-        <RewardForm />
+        <RewardForm families={families} />
       </>
     );
   const reward = isUuid(id) ? await getReward(db, id) : null;
@@ -31,7 +33,7 @@ async function Editor({ params }: Pick<PageProps<"/admin/rewards/[id]">, "params
   return (
     <>
       <PageHeader title={sv.rewards.edit} />
-      <RewardForm reward={reward} />
+      <RewardForm reward={reward} families={families} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
+import type { ZodType } from "zod";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -18,6 +19,7 @@ import {
   parseForm,
   rewardInput,
   roleInput,
+  scopeInput,
 } from "@/lib/admin/schemas";
 import { ADMIN_COOKIE, adminCookieOptions, sealAdminSession } from "@/lib/auth/admin-session";
 import { isDevLoginEnabled, jwtSigningKey } from "@/lib/auth/config";
@@ -51,41 +53,58 @@ export async function devAdminLogin() {
 
 // ── Catalog ──────────────────────────────────────────────────────────────────
 
-export async function saveChore(_: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
-  const parsed = parseForm(choreInput, form);
-  if (!parsed.ok) return { errors: parsed.errors };
-  const id = idOf(form);
-  if (id) {
-    if (!(await catalog.updateChore(db, id, parsed.data))) return { errors: { form: sv.common.notFound } };
-  } else {
-    await catalog.createChore(db, parsed.data);
+/** Turns a failed save into field errors next to the right input. */
+function saveErrors(reason: Extract<catalog.SaveResult, { ok: false }>["reason"]): FieldErrors {
+  switch (reason) {
+    case "duplicate_code":
+      return { code: sv.achievements.duplicateCode };
+    case "family_not_found":
+      return { scope: sv.common.familyNotFound };
+    case "global_stock":
+      return { stock: sv.rewards.globalStock };
+    default:
+      return { form: sv.common.notFound };
   }
-  redirect("/admin/chores");
+}
+
+/**
+ * Saves an item: updates it when the form has an id (the scope never changes), otherwise creates it in
+ * the scope picked on the form ("global" or a family).
+ */
+async function saveItem<T>(
+  form: FormData,
+  schema: ZodType<T>,
+  update: (id: string, input: T) => Promise<catalog.SaveResult>,
+  create: (input: T, scope: catalog.Scope) => Promise<catalog.SaveResult>,
+  back: string,
+): Promise<FormState> {
+  await requireAdmin();
+  const parsed = parseForm(schema, form);
+  const id = idOf(form);
+  const scope = id ? null : parseForm(scopeInput, form);
+  const errors = { ...(parsed.ok ? {} : parsed.errors), ...(scope && !scope.ok ? scope.errors : {}) };
+  if (!parsed.ok || (scope && !scope.ok)) return { errors };
+  const result = id ? await update(id, parsed.data) : await create(parsed.data, scope?.ok ? scope.data.scope : null);
+  if (!result.ok) return { errors: saveErrors(result.reason) };
+  redirect(back);
+}
+
+export async function saveChore(_: FormState, form: FormData): Promise<FormState> {
+  return saveItem(form, choreInput, (id, input) => catalog.updateChore(db, id, input), (input, scope) => catalog.createChore(db, input, scope), "/admin/chores");
 }
 
 export async function saveReward(_: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
-  const parsed = parseForm(rewardInput, form);
-  if (!parsed.ok) return { errors: parsed.errors };
-  const id = idOf(form);
-  if (id) {
-    if (!(await catalog.updateReward(db, id, parsed.data))) return { errors: { form: sv.common.notFound } };
-  } else {
-    await catalog.createReward(db, parsed.data);
-  }
-  redirect("/admin/rewards");
+  return saveItem(form, rewardInput, (id, input) => catalog.updateReward(db, id, input), (input, scope) => catalog.createReward(db, input, scope), "/admin/rewards");
 }
 
 export async function saveAchievement(_: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
-  const parsed = parseForm(achievementInput, form);
-  if (!parsed.ok) return { errors: parsed.errors };
-  const id = idOf(form);
-  const result = id ? await catalog.updateAchievement(db, id, parsed.data) : await catalog.createAchievement(db, parsed.data);
-  if (!result.ok)
-    return { errors: result.reason === "duplicate_code" ? { code: sv.achievements.duplicateCode } : { form: sv.common.notFound } };
-  redirect("/admin/achievements");
+  return saveItem(
+    form,
+    achievementInput,
+    (id, input) => catalog.updateAchievement(db, id, input),
+    (input, scope) => catalog.createAchievement(db, input, scope),
+    "/admin/achievements",
+  );
 }
 
 async function toggle(form: FormData, fn: (exec: typeof db, id: string, active: boolean) => Promise<boolean>) {
