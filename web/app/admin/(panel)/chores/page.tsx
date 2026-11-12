@@ -12,6 +12,7 @@ export default function ChoresPage() {
   return (
     <>
       <PageHeader title={sv.chores.title} action={<Link href="/admin/chores/new" className={buttonClass}>{sv.chores.new}</Link>} />
+      <p className="mb-1 text-sm text-zinc-500">{sv.common.globalHint}</p>
       <p className="mb-4 text-sm text-zinc-500">{sv.common.deactivateHint}</p>
       <Suspense fallback={<p>{sv.loading}</p>}>
         <ChoreTable />

@@ -34,6 +34,10 @@ public partial class DashboardViewModel : ApiViewModel
     [ObservableProperty]
     public partial int ChoresTotal { get; set; }
 
+    /// <summary>"Familj: X", or an explanation that the user sees the shared catalog and can join a family.</summary>
+    [ObservableProperty]
+    public partial string FamilyText { get; set; } = string.Empty;
+
     public ObservableCollection<AchievementDto> RecentAchievements { get; } = [];
 
     public DashboardViewModel(IChoreBaconApi api, IAuthService auth, INavigator navigator, IDialogs dialogs) : base(navigator)
@@ -55,6 +59,9 @@ public partial class DashboardViewModel : ApiViewModel
         StreakDays = progress.StreakDays;
         ChoresDone = progress.ChoresDoneThisPeriod;
         ChoresTotal = progress.ChoresTotal;
+        FamilyText = progress.FamilyName is { } family
+            ? string.Format(AppResources.Dashboard_Family, family)
+            : AppResources.Dashboard_NoFamily;
 
         RecentAchievements.Clear();
         foreach (var achievement in progress.RecentAchievements)
@@ -88,4 +95,7 @@ public partial class DashboardViewModel : ApiViewModel
 
     [RelayCommand]
     private Task NavigateToAchievementsAsync() => _navigator.GoToAsync(Routes.Achievements);
+
+    [RelayCommand]
+    private Task NavigateToFamilyAsync() => _navigator.GoToAsync(Routes.Family);
 }

@@ -78,6 +78,8 @@ internal static class Dto
         params AchievementDto[] recent) =>
         new(balance, lifetime, lifetime - balance, done, streak, done, total, recent);
 
+    public static ProgressResponse ProgressInFamily(string familyName) => Progress() with { FamilyName = familyName };
+
     public static CompleteChoreResponse Completed(ChoreDto chore, int balance, params AchievementDto[] unlocked) =>
         new(new CompletionDto(Guid.NewGuid(), chore.Id, "2026-11-11", "2026-11-11", CompletionStatus.Approved, DateTimeOffset.UtcNow),
             chore.Points, 0, balance, unlocked);

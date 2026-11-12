@@ -185,7 +185,8 @@ describe.skipIf(!hasDevDatabase)("families (development database, rolled back)",
         const childView = await listChores(tx, child, now);
         expect(childView.some((c) => c.id === hidden)).toBe(false);
         expect(childView.find((c) => c.id === boosted)?.points).toBe(25);
-        expect(childView.find((c) => c.id === ownId)?.points).toBe(15);
+        expect(childView.find((c) => c.id === ownId)).toMatchObject({ points: 15, isFamilyItem: true });
+        expect(childView.find((c) => c.id === boosted)?.isFamilyItem).toBe(false);
         expect(await completeChore(tx, child, hidden, now)).toMatchObject({ status: 404 });
         expect(await completeChore(tx, child, boosted, now)).toMatchObject({ ok: true, pointsEarned: 25 });
 
@@ -241,6 +242,7 @@ describe.skipIf(!hasDevDatabase)("families (development database, rolled back)",
         expect(bought.balance).toBe(60 + bought.unlockedAchievements.reduce((s, a) => s + a.bonusPoints, 0));
         expect(await redeemReward(tx, child, rewardId, now)).toMatchObject({ code: "reward_out_of_stock" });
         expect((await listRewards(tx, await seedUser(tx))).some((r) => r.id === rewardId)).toBe(false);
+        expect((await listRewards(tx, child)).find((r) => r.id === rewardId)?.isFamilyItem).toBe(true);
 
         const pending = await family.pendingRedemptions(tx, parent);
         const redemptionId = bought.ok ? bought.redemption.id : "";

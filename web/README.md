@@ -59,10 +59,10 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | GET | `/api/v1/me` | Bearer → `{ id, provider, displayName, email, role }` |
 | DELETE | `/api/v1/me` | Deletes (anonymises) the account → 204; 409 `last_parent` while the only parent of a family with others |
 | POST | `/api/v1/facebook/data-deletion` | Facebook's data deletion callback (`signed_request`, verified with the app secret) → `{ url, confirmation_code }` |
-| GET | `/api/v1/me/progress` | Balance, lifetime earned, points spent, chores completed, streak, chores done this period / total, 3 latest achievements |
-| GET | `/api/v1/chores` | Active chores, each with `completedThisPeriod` for its current Stockholm window |
+| GET | `/api/v1/me/progress` | Balance, lifetime earned, points spent, chores completed, streak, chores done this period / total, 3 latest achievements, `familyName` (null without a family) |
+| GET | `/api/v1/chores` | Visible chores, each with `completedThisPeriod` for its current Stockholm window and `isFamilyItem` |
 | POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, balance, unlockedAchievements }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
-| GET | `/api/v1/rewards` | Active rewards; `stock` null = unlimited, 0 = sold out |
+| GET | `/api/v1/rewards` | Visible rewards; `stock` null = unlimited, 0 = sold out; `isFamilyItem` for the family's own |
 | POST | `/api/v1/rewards/{id}/redeem` | 201 `{ redemption, balance, unlockedAchievements }`; 409 `insufficient_points` / `reward_out_of_stock` |
 | GET | `/api/v1/achievements` | Active achievements (plus inactive ones the user has); `unlockedAt` null while locked |
 | POST | `/api/v1/families` | `{ name }` → 201 family; caller becomes parent. 409 `already_in_family` |

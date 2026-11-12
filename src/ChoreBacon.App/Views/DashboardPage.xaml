@@ -30,6 +30,17 @@
                     </VerticalStackLayout>
                 </Grid>
 
+                <!-- Family (tap to open the family tab) -->
+                <Border StrokeThickness="0" Padding="12" BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2D1F0A}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10" />
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToFamilyCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding FamilyText}" FontSize="13" />
+                </Border>
+
                 <!-- Error -->
                 <Label Text="{Binding ErrorMessage}"
                        IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"

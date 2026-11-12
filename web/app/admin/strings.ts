@@ -1,7 +1,7 @@
 // Swedish UI text for the admin pages, in one place so it can be translated later.
 export const sv = {
   appName: "ChoreBacon admin",
-  nav: { chores: "Sysslor", rewards: "Belöningar", achievements: "Prestationer", users: "Användare" },
+  nav: { chores: "Sysslor", rewards: "Belöningar", achievements: "Prestationer", families: "Familjer", users: "Användare" },
   signedInAs: "Inloggad som",
   logout: "Logga ut",
   loading: "Laddar…",
@@ -34,6 +34,9 @@ export const sv = {
     empty: "Inget här ännu.",
     notFound: "Hittades inte.",
     deactivateHint: "Inaktiverade objekt visas inte i appen men finns kvar, så historik bevaras.",
+    globalHint:
+      "Det här är den globala katalogen: den visas för alla, med eller utan familj. Familjer kan stänga av eller prisändra globala objekt och lägga till egna – se Familjer.",
+    achievementsHint: "Prestationer är globala och samma för alla, oavsett familj.",
   },
   chores: {
     title: "Sysslor",
@@ -79,10 +82,45 @@ export const sv = {
     chores: "Sysslor",
     created: "Skapad",
     roles: { user: "Användare", admin: "Admin" } as Record<string, string>,
+    family: "Familj",
+    noFamily: "–",
+    deleted: "Raderad",
     makeAdmin: "Gör till admin",
     removeAdmin: "Ta bort admin",
     cannotDemoteSelf: "Du kan inte ta bort din egen adminroll.",
   },
+};
+
+export const familySv = {
+  title: "Familjer",
+  intro:
+    "Familjer skapas av föräldrar i appen. Här ser du vem som är med i vilken familj och vad varje familj har ändrat eller lagt till utöver den globala katalogen. Föräldrarna hanterar familjen i appen.",
+  empty: "Inga familjer ännu. En förälder skapar en familj i appen under fliken Familj.",
+  name: "Familj",
+  members: "Medlemmar",
+  parents: "Föräldrar",
+  approval: "Godkännande",
+  on: "På",
+  off: "Av",
+  ownChores: "Egna sysslor",
+  ownRewards: "Egna belöningar",
+  changes: "Ändringar av globala",
+  created: "Skapad",
+  roles: { parent: "Förälder", child: "Barn" } as Record<string, string>,
+  joined: "Gick med",
+  memberSection: "Medlemmar",
+  ownChoresSection: "Familjens egna sysslor",
+  ownRewardsSection: "Familjens egna belöningar",
+  choreChangesSection: "Ändrade globala sysslor",
+  rewardChangesSection: "Ändrade globala belöningar",
+  none: "Inga.",
+  catalogValue: "Katalog",
+  familyValue: "I familjen",
+  hidden: "Avstängd i familjen",
+  shown: "Visas",
+  stock: "Lager",
+  unlimited: "Obegränsat",
+  back: "Alla familjer",
 };
 
 const dateFormat = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", dateStyle: "short", timeStyle: "short" });

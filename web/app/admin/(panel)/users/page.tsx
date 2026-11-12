@@ -1,10 +1,11 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listUsers } from "@/lib/admin/catalog";
 import { setUserRole } from "../../actions";
 import { PageHeader, secondaryButtonClass, tableClass } from "../../_components/ui";
-import { formatDate, sv } from "../../strings";
+import { familySv, formatDate, sv } from "../../strings";
 
 export default function UsersPage({ searchParams }: PageProps<"/admin/users">) {
   return (
@@ -30,6 +31,7 @@ async function UserTable({ searchParams }: Pick<PageProps<"/admin/users">, "sear
             <th>{sv.users.name}</th>
             <th>{sv.users.provider}</th>
             <th>{sv.users.role}</th>
+            <th>{sv.users.family}</th>
             <th>{sv.users.balance}</th>
             <th>{sv.users.lifetime}</th>
             <th>{sv.users.chores}</th>
@@ -45,13 +47,22 @@ async function UserTable({ searchParams }: Pick<PageProps<"/admin/users">, "sear
                 {user.email && <div className="text-xs text-zinc-500">{user.email}</div>}
               </td>
               <td>{user.provider}</td>
-              <td>{sv.users.roles[user.role]}</td>
+              <td>{user.deletedAt ? sv.users.deleted : sv.users.roles[user.role]}</td>
+              <td>
+                {user.familyId ? (
+                  <Link href={`/admin/families/${user.familyId}`} className="hover:underline">
+                    {user.familyName} ({familySv.roles[user.familyRole ?? "child"]})
+                  </Link>
+                ) : (
+                  sv.users.noFamily
+                )}
+              </td>
               <td>{user.balance}</td>
               <td>{user.lifetimeEarned}</td>
               <td>{user.choresCompleted}</td>
               <td className="whitespace-nowrap">{formatDate(user.createdAt)}</td>
               <td className="text-right">
-                {user.id !== admin.id && (
+                {user.id !== admin.id && !user.deletedAt && (
                   <form action={setUserRole} className="inline">
                     <input type="hidden" name="id" value={user.id} />
                     <input type="hidden" name="role" value={user.role === "admin" ? "user" : "admin"} />

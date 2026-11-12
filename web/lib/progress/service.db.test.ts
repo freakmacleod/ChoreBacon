@@ -241,6 +241,7 @@ describe.skipIf(!hasDevDatabase)("progress service (development database, rolled
         expect(summary.streakDays).toBe(1);
         expect(summary.choresDoneThisPeriod).toBe(1);
         expect(summary.recentAchievements.map((a) => a.code)).toContain("first_chore");
+        expect(summary.familyName).toBeNull();
 
         // A second chore must not unlock first_chore again.
         const other = await seedChore(tx, "daily", 5);

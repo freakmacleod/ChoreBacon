@@ -8,6 +8,7 @@ const links = [
   ["/admin/chores", sv.nav.chores],
   ["/admin/rewards", sv.nav.rewards],
   ["/admin/achievements", sv.nav.achievements],
+  ["/admin/families", sv.nav.families],
   ["/admin/users", sv.nav.users],
 ] as const;
 

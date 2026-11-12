@@ -12,6 +12,7 @@ export default function RewardsPage() {
   return (
     <>
       <PageHeader title={sv.rewards.title} action={<Link href="/admin/rewards/new" className={buttonClass}>{sv.rewards.new}</Link>} />
+      <p className="mb-1 text-sm text-zinc-500">{sv.common.globalHint}</p>
       <p className="mb-4 text-sm text-zinc-500">{sv.common.deactivateHint}</p>
       <Suspense fallback={<p>{sv.loading}</p>}>
         <RewardTable />

@@ -111,6 +111,10 @@ export const listUsers = (exec: Executor) =>
       balance: sql<number>`(select coalesce(sum(pl.delta), 0)::int from point_ledger pl where pl.user_id = users.id)`,
       lifetimeEarned: sql<number>`(select coalesce(sum(pl.delta), 0)::int from point_ledger pl where pl.user_id = users.id and pl.delta > 0)`,
       choresCompleted: sql<number>`(select count(*)::int from chore_completions cc where cc.user_id = users.id and cc.status = 'approved')`,
+      deletedAt: users.deletedAt,
+      familyId: sql<string | null>`(select fm.family_id from family_members fm where fm.user_id = users.id)`,
+      familyName: sql<string | null>`(select f.name from family_members fm join families f on f.id = fm.family_id where fm.user_id = users.id)`,
+      familyRole: sql<"parent" | "child" | null>`(select fm.role from family_members fm where fm.user_id = users.id)`,
     })
     .from(users)
     .orderBy(desc(users.createdAt));
