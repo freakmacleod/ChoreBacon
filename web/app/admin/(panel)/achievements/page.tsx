@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listAchievements } from "@/lib/admin/catalog";
+import { iconGlyph } from "@/lib/icons";
 import { setAchievementActive } from "../../actions";
 import { ActiveToggle } from "../../_components/ActiveToggle";
 import { PageHeader, StatusBadge, buttonClass, tableClass } from "../../_components/ui";
@@ -37,6 +38,7 @@ async function AchievementTable() {
           <th>{sv.achievements.threshold}</th>
           <th>{sv.achievements.bonus}</th>
           <th>{sv.achievements.rarity}</th>
+          <th>{sv.common.icon}</th>
           <th>{sv.common.status}</th>
           <th />
         </tr>
@@ -54,6 +56,9 @@ async function AchievementTable() {
             <td>{a.threshold}</td>
             <td>{a.bonusPoints}</td>
             <td>{sv.achievements.rarities[a.rarity]}</td>
+            <td className="text-xl" title={a.icon}>
+              {iconGlyph(a.icon)}
+            </td>
             <td>
               <StatusBadge active={a.isActive} labels={sv.common} />
             </td>

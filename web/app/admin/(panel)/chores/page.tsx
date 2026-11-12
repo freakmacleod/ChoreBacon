@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listChores } from "@/lib/admin/catalog";
+import { iconGlyph } from "@/lib/icons";
 import { setChoreActive } from "../../actions";
 import { ActiveToggle } from "../../_components/ActiveToggle";
 import { PageHeader, StatusBadge, buttonClass, tableClass } from "../../_components/ui";
@@ -48,7 +49,9 @@ async function ChoreTable() {
             </td>
             <td>{chore.points}</td>
             <td>{sv.chores.frequencies[chore.frequency]}</td>
-            <td className="font-mono text-xs">{chore.icon}</td>
+            <td className="text-xl" title={chore.icon}>
+              {iconGlyph(chore.icon)}
+            </td>
             <td>
               <StatusBadge active={chore.isActive} labels={sv.common} />
             </td>
