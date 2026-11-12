@@ -43,6 +43,13 @@
       "when": 1794425414350,
       "tag": "0005_families",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794458072238,
+      "tag": "0006_account_deletion",
+      "breakpoints": true
     }
   ]
 }

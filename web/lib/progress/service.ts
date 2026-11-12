@@ -93,9 +93,13 @@ async function unlockAchievements(tx: Executor, userId: string, now: Date) {
   return unlocked.map((a) => ({ ...a, unlockedAt: now }));
 }
 
-/** Locks the user's row for the rest of the transaction; false if the user no longer exists. */
+/** Locks the user's row for the rest of the transaction; false if the user no longer exists or was deleted. */
 async function lockUser(tx: Executor, userId: string): Promise<boolean> {
-  const rows = await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for("update");
+  const rows = await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+    .for("update");
   return rows.length > 0;
 }
 
