@@ -36,6 +36,7 @@ public class IconGlyphsTests
     [InlineData("dishes", "🍽️")]
     [InlineData("ach_first", "👣")]
     [InlineData("reward_pizza", "🍕")]
+    [InlineData("dog_walk", "🐕")]
     [InlineData("reward_unknown", "🎁")]
     [InlineData("ach_unknown", "🏆")]
     [InlineData("whatever", IconGlyphs.Default)]
@@ -43,5 +44,16 @@ public class IconGlyphsTests
     public void Icon_keys_map_to_glyphs_and_never_show_the_raw_key(string? key, string expected)
     {
         Assert.Equal(expected, IconGlyphs.For(key));
+    }
+
+    [Fact]
+    public void The_shared_icon_set_is_embedded_with_every_seeded_key()
+    {
+        var glyphs = IconGlyphs.Load();
+        string[] seeded = ["dishes", "vacuum", "trash", "laundry", "bathroom", "lawn", "pet", "bed", "chore_default",
+            "reward_screen", "reward_dinner", "reward_icecream", "reward_movie", "reward_skip", "reward_game", "reward_late",
+            "reward_pizza", "reward_default", "ach_first", "ach_10", "ach_50", "ach_100", "ach_pts100", "ach_pts500",
+            "ach_streak3", "ach_streak7", "ach_streak30", "ach_spend", "achievement_default"];
+        Assert.All(seeded, key => Assert.True(glyphs.ContainsKey(key), key));
     }
 }
