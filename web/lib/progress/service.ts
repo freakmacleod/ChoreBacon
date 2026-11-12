@@ -136,6 +136,8 @@ function resolvedChores(exec: Executor, familyId: string | null) {
       icon: chores.icon,
       points: sql<number>`coalesce(${choreFamilySettings.pointsOverride}, ${chores.points})`.mapWith(Number),
       frequency: chores.frequency,
+      // True for the family's own chores, false for global ones (also when the family changed their points).
+      isFamilyItem: sql<boolean>`${chores.familyId} is not null`,
     })
     .from(chores)
     .leftJoin(
@@ -290,7 +292,7 @@ export async function listRewards(exec: Executor, userId: string) {
   const membership = await membershipOf(exec, userId);
   const rows = await resolvedRewards(exec, membership?.familyId ?? null);
   return rows
-    .map(({ id, title, description, icon, cost, stock }) => ({ id, title, description, icon, cost, stock }))
+    .map(({ id, title, description, icon, cost, stock, isFamilyReward }) => ({ id, title, description, icon, cost, stock, isFamilyItem: isFamilyReward }))
     .sort((a, b) => a.cost - b.cost || a.title.localeCompare(b.title, "sv"));
 }
 
@@ -372,9 +374,14 @@ export function listAchievements(exec: Executor, userId: string) {
     .orderBy(asc(RARITY_ORDER), asc(achievements.threshold), asc(achievements.title));
 }
 
-/** Dashboard numbers: balance, lifetime earned, streak, chores done this period, latest achievements. */
+/** Dashboard numbers: balance, lifetime earned, streak, chores done this period, latest achievements, family name. */
 export async function progressSummary(exec: Executor, userId: string, now: Date) {
   const stats = await loadStats(exec, userId, now);
+  const [family] = await exec
+    .select({ name: families.name })
+    .from(familyMembers)
+    .innerJoin(families, eq(families.id, familyMembers.familyId))
+    .where(eq(familyMembers.userId, userId));
   const choreList = await listChores(exec, userId, now);
   const recentAchievements = await exec
     .select({ ...achievementColumns, unlockedAt: userAchievements.unlockedAt })
@@ -389,5 +396,6 @@ export async function progressSummary(exec: Executor, userId: string, now: Date)
     choresDoneThisPeriod: choreList.filter((c) => c.completedThisPeriod).length,
     choresTotal: choreList.length,
     recentAchievements,
+    familyName: family?.name ?? null,
   };
 }
