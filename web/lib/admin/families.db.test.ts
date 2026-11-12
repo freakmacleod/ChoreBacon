@@ -6,6 +6,7 @@ import { chores, families, rewards, users } from "../../db/schema";
 import * as family from "../family/service";
 import { closeDevDatabase, hasDevDatabase, inRollback } from "../test/dev-db";
 import { listUsers } from "./catalog";
+import * as admin from "./families";
 import { getFamilyDetail, listFamilies } from "./families";
 
 async function seedUser(tx: Executor, name: string) {
@@ -48,6 +49,73 @@ describe.skipIf(!hasDevDatabase)("admin view of families (development database, 
       const userRows = await listUsers(tx);
       expect(userRows.find((u) => u.id === child)).toMatchObject({ familyId: created.familyId, familyName: "Familjen Test", familyRole: "child" });
       expect(userRows.find((u) => u.id === solo)).toMatchObject({ familyId: null, familyName: null });
+    });
+  });
+
+  it("lets the admin create a family and place users in it", async () => {
+    await inRollback(async (tx) => {
+      const parent = await seedUser(tx, "Admin Förälder");
+      const child = await seedUser(tx, "Admin Barn");
+      const familyId = await admin.createFamily(tx, { name: "Adminfamiljen", requiresApproval: true });
+
+      const detail = await getFamilyDetail(tx, familyId);
+      expect(detail?.family).toMatchObject({ name: "Adminfamiljen", requiresApproval: true });
+      expect(detail?.family.inviteCode).toMatch(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+
+      expect(await admin.addMember(tx, familyId, parent, "parent")).toEqual({ ok: true });
+      expect(await admin.addMember(tx, familyId, child, "child")).toEqual({ ok: true });
+      const free = (await admin.usersWithoutFamily(tx)).map((u) => u.id);
+      expect(free).not.toContain(parent);
+      expect(free).not.toContain(child);
+
+      // The member sees the family in the app exactly as if they had created or joined it.
+      const seen = await family.getFamily(tx, parent);
+      expect(seen).toMatchObject({ ok: true, family: { name: "Adminfamiljen", role: "parent" } });
+
+      expect(await admin.updateFamily(tx, familyId, { name: "Nytt namn", requiresApproval: false })).toBe(true);
+      expect((await getFamilyDetail(tx, familyId))?.family).toMatchObject({ name: "Nytt namn", requiresApproval: false });
+      expect(await admin.updateFamily(tx, randomUUID(), { name: "x", requiresApproval: false })).toBe(false);
+    });
+  });
+
+  it("keeps one family per user and refuses unknown or deleted users", async () => {
+    await inRollback(async (tx) => {
+      const user = await seedUser(tx, "Upptagen");
+      const deleted = await seedUser(tx, "Raderad");
+      await tx.update(users).set({ deletedAt: new Date() }).where(eq(users.id, deleted));
+      const first = await admin.createFamily(tx, { name: "Första", requiresApproval: false });
+      const second = await admin.createFamily(tx, { name: "Andra", requiresApproval: false });
+
+      await admin.addMember(tx, first, user, "parent");
+      expect(await admin.addMember(tx, second, user, "child")).toEqual({ ok: false, reason: "already_in_family" });
+      expect(await admin.addMember(tx, second, deleted, "child")).toEqual({ ok: false, reason: "user_not_found" });
+      expect(await admin.addMember(tx, second, randomUUID(), "child")).toEqual({ ok: false, reason: "user_not_found" });
+      expect(await admin.addMember(tx, randomUUID(), user, "child")).toEqual({ ok: false, reason: "not_found" });
+      expect((await admin.usersWithoutFamily(tx)).map((u) => u.id)).not.toContain(deleted);
+    });
+  });
+
+  it("never leaves a family with members but no parent", async () => {
+    await inRollback(async (tx) => {
+      const parent = await seedUser(tx, "Ensam förälder");
+      const child = await seedUser(tx, "Barnet");
+      const familyId = await admin.createFamily(tx, { name: "Familjen Regel", requiresApproval: false });
+      await admin.addMember(tx, familyId, parent, "parent");
+      await admin.addMember(tx, familyId, child, "child");
+
+      expect(await admin.setMemberRole(tx, familyId, parent, "child")).toEqual({ ok: false, reason: "last_parent" });
+      expect(await admin.removeMember(tx, familyId, parent)).toEqual({ ok: false, reason: "last_parent" });
+
+      // Promote the child first; then the old parent can step down or leave.
+      expect(await admin.setMemberRole(tx, familyId, child, "parent")).toEqual({ ok: true });
+      expect(await admin.setMemberRole(tx, familyId, parent, "child")).toEqual({ ok: true });
+      expect(await admin.removeMember(tx, familyId, parent)).toEqual({ ok: true });
+      expect((await admin.usersWithoutFamily(tx)).map((u) => u.id)).toContain(parent);
+
+      // The last member may leave: an empty family is allowed and can be filled again.
+      expect(await admin.removeMember(tx, familyId, child)).toEqual({ ok: true });
+      expect(await admin.removeMember(tx, familyId, child)).toEqual({ ok: false, reason: "not_found" });
+      expect(await admin.addMember(tx, familyId, child, "parent")).toEqual({ ok: true });
     });
   });
 });

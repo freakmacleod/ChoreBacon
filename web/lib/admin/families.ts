@@ -1,9 +1,13 @@
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
 import { choreFamilySettings, chores, families, familyMembers, rewardFamilySettings, rewards, users } from "../../db/schema";
+import { formatInviteCode } from "../family/invite-code";
+import { unusedInviteCode } from "../family/service";
 
-// Read-only admin view of families: who is in which family, and what each family has changed or added
-// on top of the global catalog. Parents manage their family in the app; the admin only looks.
+// Admin view of families: who is in which family, and what each family has changed or added on top of
+// the global catalog. The admin can also create families and place users in them (e.g. to set up a
+// parent without the app); the catalog itself is still tailored by the parents in the app. The same
+// rules as in the app hold: one family per user, and a family with members always keeps a parent.
 
 export const listFamilies = (exec: Executor) =>
   exec
@@ -70,5 +74,88 @@ export async function getFamilyDetail(exec: Executor, familyId: string) {
     .where(eq(rewardFamilySettings.familyId, familyId))
     .orderBy(asc(rewards.title));
 
-  return { family, members, ownChores, ownRewards, choreChanges, rewardChanges };
+  return {
+    family: { ...family, inviteCode: formatInviteCode(family.inviteCode) },
+    members,
+    ownChores,
+    ownRewards,
+    choreChanges,
+    rewardChanges,
+  };
+}
+
+// ── Management ───────────────────────────────────────────────────────────────
+
+export type FamilyRole = "parent" | "child";
+export type MemberResult = { ok: true } | { ok: false; reason: "not_found" | "user_not_found" | "already_in_family" | "last_parent" };
+
+export async function createFamily(exec: Executor, input: { name: string; requiresApproval: boolean }) {
+  const [family] = await exec
+    .insert(families)
+    .values({ ...input, inviteCode: await unusedInviteCode(exec) })
+    .returning({ id: families.id });
+  return family.id;
+}
+
+export async function updateFamily(exec: Executor, familyId: string, input: { name: string; requiresApproval: boolean }) {
+  const updated = await exec.update(families).set(input).where(eq(families.id, familyId)).returning({ id: families.id });
+  return updated.length > 0;
+}
+
+/** Users that can be added: not deleted and not already in a family. */
+export const usersWithoutFamily = (exec: Executor) =>
+  exec
+    .select({ id: users.id, displayName: users.displayName, email: users.email, provider: users.provider })
+    .from(users)
+    .where(and(isNull(users.deletedAt), sql`not exists (select 1 from family_members fm where fm.user_id = ${users.id})`))
+    .orderBy(asc(users.displayName));
+
+export async function addMember(exec: Executor, familyId: string, userId: string, role: FamilyRole): Promise<MemberResult> {
+  return exec.transaction(async (tx) => {
+    const [family] = await tx.select({ id: families.id }).from(families).where(eq(families.id, familyId));
+    if (!family) return { ok: false, reason: "not_found" };
+    const [user] = await tx.select({ id: users.id }).from(users).where(and(eq(users.id, userId), isNull(users.deletedAt)));
+    if (!user) return { ok: false, reason: "user_not_found" };
+    // The unique index on family_members.user_id is the real "one family" guard.
+    const added = await tx
+      .insert(familyMembers)
+      .values({ familyId, userId, role })
+      .onConflictDoNothing()
+      .returning({ userId: familyMembers.userId });
+    return added.length > 0 ? { ok: true } : { ok: false, reason: "already_in_family" };
+  });
+}
+
+/** The family's members, locked so concurrent role changes and removals see each other. */
+const lockMembers = (exec: Executor, familyId: string) =>
+  exec
+    .select({ userId: familyMembers.userId, role: familyMembers.role })
+    .from(familyMembers)
+    .where(eq(familyMembers.familyId, familyId))
+    .for("update");
+
+export async function setMemberRole(exec: Executor, familyId: string, userId: string, role: FamilyRole): Promise<MemberResult> {
+  return exec.transaction(async (tx) => {
+    const members = await lockMembers(tx, familyId);
+    const member = members.find((m) => m.userId === userId);
+    if (!member) return { ok: false, reason: "not_found" };
+    if (role === "child" && member.role === "parent" && !members.some((m) => m.userId !== userId && m.role === "parent"))
+      return { ok: false, reason: "last_parent" };
+    await tx.update(familyMembers).set({ role }).where(eq(familyMembers.userId, userId));
+    return { ok: true };
+  });
+}
+
+/** Takes a user out of the family; their points stay theirs. The last parent stays while others remain. */
+export async function removeMember(exec: Executor, familyId: string, userId: string): Promise<MemberResult> {
+  return exec.transaction(async (tx) => {
+    const members = await lockMembers(tx, familyId);
+    const member = members.find((m) => m.userId === userId);
+    if (!member) return { ok: false, reason: "not_found" };
+    const others = members.filter((m) => m.userId !== userId);
+    if (member.role === "parent" && others.length > 0 && !others.some((m) => m.role === "parent"))
+      return { ok: false, reason: "last_parent" };
+    await tx.delete(familyMembers).where(eq(familyMembers.userId, userId));
+    return { ok: true };
+  });
 }

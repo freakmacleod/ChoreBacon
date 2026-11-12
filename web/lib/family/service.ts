@@ -128,7 +128,7 @@ export async function regenerateInviteCode(exec: Executor, userId: string) {
 }
 
 /** A code no family uses yet (the unique constraint stays the final guard against a race). */
-async function unusedInviteCode(exec: Executor) {
+export async function unusedInviteCode(exec: Executor) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = newInviteCode();
     const [taken] = await exec.select({ id: families.id }).from(families).where(eq(families.inviteCode, code));

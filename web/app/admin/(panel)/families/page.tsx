@@ -3,13 +3,20 @@ import { Suspense } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listFamilies } from "@/lib/admin/families";
-import { PageHeader, tableClass } from "../../_components/ui";
+import { PageHeader, buttonClass, tableClass } from "../../_components/ui";
 import { familySv, formatDate, sv } from "../../strings";
 
 export default function FamiliesPage() {
   return (
     <>
-      <PageHeader title={familySv.title} />
+      <PageHeader
+        title={familySv.title}
+        action={
+          <Link href="/admin/families/new" className={buttonClass}>
+            {familySv.new}
+          </Link>
+        }
+      />
       <p className="mb-4 text-sm text-zinc-500">{familySv.intro}</p>
       <Suspense fallback={<p>{sv.loading}</p>}>
         <FamilyTable />

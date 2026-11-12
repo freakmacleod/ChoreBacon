@@ -3,16 +3,38 @@ import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { db } from "@/db";
 import { requireAdmin } from "@/lib/admin/auth";
-import { getFamilyDetail } from "@/lib/admin/families";
+import { getFamilyDetail, usersWithoutFamily } from "@/lib/admin/families";
 import { isUuid } from "@/lib/api";
-import { PageHeader, StatusBadge, tableClass } from "../../../_components/ui";
+import { removeFamilyMember, setFamilyMemberRole } from "../../../actions";
+import { AddMemberForm, FamilyForm } from "../../../_components/family-forms";
+import { PageHeader, StatusBadge, secondaryButtonClass, tableClass } from "../../../_components/ui";
 import { familySv, formatDate, sv } from "../../../strings";
 
-export default function FamilyDetailPage({ params }: PageProps<"/admin/families/[id]">) {
+export default function FamilyDetailPage({ params, searchParams }: PageProps<"/admin/families/[id]">) {
   return (
     <Suspense fallback={<p>{sv.loading}</p>}>
-      <Detail params={params} />
+      <Detail params={params} searchParams={searchParams} />
     </Suspense>
+  );
+}
+
+/** A one-button form posting a member change to a Server Action. */
+function MemberButton({ familyId, userId, action, role, label }: {
+  familyId: string;
+  userId: string;
+  action: (form: FormData) => Promise<void>;
+  role?: string;
+  label: string;
+}) {
+  return (
+    <form action={action} className="inline">
+      <input type="hidden" name="id" value={familyId} />
+      <input type="hidden" name="userId" value={userId} />
+      {role && <input type="hidden" name="role" value={role} />}
+      <button type="submit" className={secondaryButtonClass}>
+        {label}
+      </button>
+    </form>
   );
 }
 
@@ -25,12 +47,21 @@ function Section({ title, empty, children }: { title: string; empty: boolean; ch
   );
 }
 
-async function Detail({ params }: Pick<PageProps<"/admin/families/[id]">, "params">) {
+async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]">) {
   await requireAdmin();
   const { id } = await params;
+  if (id === "new")
+    return (
+      <>
+        <PageHeader title={familySv.new} />
+        <FamilyForm />
+      </>
+    );
   const detail = isUuid(id) ? await getFamilyDetail(db, id) : null;
   if (!detail) notFound();
   const { family, members, ownChores, ownRewards, choreChanges, rewardChanges } = detail;
+  const { error } = await searchParams;
+  const freeUsers = await usersWithoutFamily(db);
 
   return (
     <>
@@ -41,6 +72,11 @@ async function Detail({ params }: Pick<PageProps<"/admin/families/[id]">, "param
       <p className="text-sm text-zinc-500">
         {familySv.approval}: {family.requiresApproval ? familySv.on : familySv.off} · {familySv.created} {formatDate(family.createdAt)}
       </p>
+      <p className="mt-2 text-sm">
+        {familySv.inviteCode}: <span className="font-mono text-base font-semibold">{family.inviteCode}</span>
+      </p>
+      <p className="text-xs text-zinc-500">{familySv.inviteHint}</p>
+      {typeof error === "string" && familySv.errors[error] && <p className="mt-4 text-sm text-red-600">{familySv.errors[error]}</p>}
 
       <Section title={familySv.memberSection} empty={members.length === 0}>
         <table className={tableClass}>
@@ -50,6 +86,7 @@ async function Detail({ params }: Pick<PageProps<"/admin/families/[id]">, "param
               <th>{sv.users.role}</th>
               <th>{sv.users.balance}</th>
               <th>{familySv.joined}</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -62,11 +99,34 @@ async function Detail({ params }: Pick<PageProps<"/admin/families/[id]">, "param
                 <td>{familySv.roles[m.role]}</td>
                 <td>{m.balance}</td>
                 <td className="whitespace-nowrap">{formatDate(m.joinedAt)}</td>
+                <td className="space-x-2 whitespace-nowrap text-right">
+                  <MemberButton
+                    familyId={family.id}
+                    userId={m.userId}
+                    action={setFamilyMemberRole}
+                    role={m.role === "parent" ? "child" : "parent"}
+                    label={m.role === "parent" ? familySv.makeChild : familySv.makeParent}
+                  />
+                  <MemberButton familyId={family.id} userId={m.userId} action={removeFamilyMember} label={familySv.remove} />
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </Section>
+
+      <p className="mt-2 text-xs text-zinc-500">{familySv.removeHint}</p>
+
+      <section className="mt-6 space-y-2">
+        <h2 className="text-lg font-semibold">{familySv.addMember}</h2>
+        <p className="text-xs text-zinc-500">{familySv.addMemberHint}</p>
+        <AddMemberForm familyId={family.id} users={freeUsers} hasParent={members.some((m) => m.role === "parent")} />
+      </section>
+
+      <section className="mt-8 space-y-2">
+        <h2 className="text-lg font-semibold">{familySv.edit}</h2>
+        <FamilyForm family={family} />
+      </section>
 
       <Section title={familySv.ownChoresSection} empty={ownChores.length === 0}>
         <table className={tableClass}>
