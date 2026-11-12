@@ -57,6 +57,8 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | POST | `/api/v1/auth/logout` | `{ refresh_token }` → 204, revokes the session |
 | POST | `/api/v1/auth/dev` | `{ name? }` → token pair. **404 unless `ALLOW_DEV_LOGIN=true`; always 404 in production** |
 | GET | `/api/v1/me` | Bearer → `{ id, provider, displayName, email, role }` |
+| DELETE | `/api/v1/me` | Deletes (anonymises) the account → 204; 409 `last_parent` while the only parent of a family with others |
+| POST | `/api/v1/facebook/data-deletion` | Facebook's data deletion callback (`signed_request`, verified with the app secret) → `{ url, confirmation_code }` |
 | GET | `/api/v1/me/progress` | Balance, lifetime earned, points spent, chores completed, streak, chores done this period / total, 3 latest achievements |
 | GET | `/api/v1/chores` | Active chores, each with `completedThisPeriod` for its current Stockholm window |
 | POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, balance, unlockedAchievements }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
@@ -126,3 +128,18 @@ transaction; they are skipped when that file is missing.
 - **Stock:** an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.
 - **Roles:** the first admin is granted with `npm run admin:grant -- --email … --production` after that person has signed in
   once. After that, use the Användare page. An admin cannot remove their own admin role.
+
+## Privacy and account deletion
+
+- Public pages: `/` (home), `/integritet` (privacy policy), `/radera-konto` (how to delete an account, plus the status for a
+  `?kod=` confirmation code from the Facebook callback).
+- **Deletion = anonymisation:** name, email and provider id are removed, sessions revoked, and the user leaves their family.
+  `users.deleted_at` is set. The ledger, completions and redemptions stay, linked to the anonymous row, so totals and
+  the append-only ledger stay consistent. Signing in again creates a new account. Deleted users cannot write, use `/me` or
+  the admin, even with a still-valid access token.
+- A family's last parent must hand over first in the app (409). Facebook's callback cannot be refused: it deletes anyway and
+  switches approval off for a family left without parents.
+- `account_deletions` keeps only confirmation codes and times, so `/radera-konto?kod=…` can answer.
+- **Facebook app settings:** Privacy Policy URL `https://chorebacon.vercel.app/integritet`; Data deletion request URL
+  `https://chorebacon.vercel.app/api/v1/facebook/data-deletion`. **Google consent screen:** home page `/` and privacy policy
+  `/integritet`.

@@ -60,6 +60,9 @@ export const users = pgTable(
     // Global role only; parent/child is per family in family_members.
     role: globalRole("role").notNull().default("user"),
     createdAt: createdAt(),
+    // Set when the account is deleted. The row is then anonymised (no name, email or provider id) but
+    // kept, so the append-only ledger and history stay consistent without pointing at a person.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [uniqueIndex("users_provider_identity_uq").on(t.provider, t.providerUserId)],
 );
@@ -304,3 +307,13 @@ export const refreshTokens = pgTable(
   },
   (t) => [index("refresh_tokens_chain_idx").on(t.chainId), index("refresh_tokens_user_idx").on(t.userId)],
 );
+
+// ── Account deletion ─────────────────────────────────────────────────────────
+
+// Receipts for deletion requests (e.g. Facebook's data deletion callback), looked up by the code shown
+// to the person. Holds no personal data: only the code and when it was requested and done.
+export const accountDeletions = pgTable("account_deletions", {
+  code: text("code").primaryKey(),
+  requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});

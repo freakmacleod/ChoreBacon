@@ -20,4 +20,10 @@ public class ApiConfigTests
     {
         Assert.Equal("http", ApiConfig.FromAssemblyMetadata().BaseAddress.Scheme[..4]);
     }
+
+    [Fact]
+    public void Privacy_policy_is_served_by_the_same_deployment()
+    {
+        Assert.Equal(new Uri("https://chorebacon.vercel.app/integritet"), new ApiConfig(new Uri("https://chorebacon.vercel.app")).PrivacyPolicyUri);
+    }
 }

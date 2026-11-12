@@ -76,6 +76,10 @@
                                    Color="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}"
                                    HorizontalOptions="Center" />
 
+                <!-- Privacy policy (required by Google/Facebook and the app stores) -->
+                <Button Text="{x:Static strings:AppResources.Login_PrivacyPolicy}" Command="{Binding OpenPrivacyPolicyCommand}"
+                        BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}" FontSize="13" />
+
                 <!-- Error Message -->
                 <Label Text="{Binding ErrorMessage}"
                        IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"

@@ -129,6 +129,6 @@ export async function findAdmin(exec: Executor, userId: string) {
   const [user] = await exec
     .select({ id: users.id, displayName: users.displayName })
     .from(users)
-    .where(and(eq(users.id, userId), eq(users.role, "admin")));
+    .where(and(eq(users.id, userId), eq(users.role, "admin"), isNull(users.deletedAt)));
   return user ?? null;
 }

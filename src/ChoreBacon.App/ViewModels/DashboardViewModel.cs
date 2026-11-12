@@ -14,6 +14,7 @@ public partial class DashboardViewModel : ApiViewModel
     private readonly IChoreBaconApi _api;
     private readonly IAuthService _auth;
     private readonly INavigator _navigator;
+    private readonly IDialogs _dialogs;
 
     [ObservableProperty]
     public partial string UserName { get; set; } = string.Empty;
@@ -35,11 +36,12 @@ public partial class DashboardViewModel : ApiViewModel
 
     public ObservableCollection<AchievementDto> RecentAchievements { get; } = [];
 
-    public DashboardViewModel(IChoreBaconApi api, IAuthService auth, INavigator navigator) : base(navigator)
+    public DashboardViewModel(IChoreBaconApi api, IAuthService auth, INavigator navigator, IDialogs dialogs) : base(navigator)
     {
         _api = api;
         _auth = auth;
         _navigator = navigator;
+        _dialogs = dialogs;
         Title = AppResources.Tab_Dashboard;
     }
 
@@ -64,6 +66,18 @@ public partial class DashboardViewModel : ApiViewModel
     {
         await _auth.LogoutAsync(cancellationToken);
         await _navigator.GoToAsync(Routes.Login);
+    }
+
+    /// <summary>Deletes the account after confirmation (GDPR erasure); a family's last parent is asked to hand over first.</summary>
+    [RelayCommand]
+    private async Task DeleteAccountAsync(CancellationToken cancellationToken)
+    {
+        var confirmed = await _dialogs.ConfirmAsync(
+            AppResources.Dashboard_DeleteAccount, AppResources.Dashboard_DeleteConfirm,
+            AppResources.Dashboard_DeleteAccept, AppResources.Common_Cancel);
+        if (!confirmed) return;
+        if (await RunAsync(() => _auth.DeleteAccountAsync(cancellationToken), cancellationToken))
+            await _navigator.GoToAsync(Routes.Login);
     }
 
     [RelayCommand]

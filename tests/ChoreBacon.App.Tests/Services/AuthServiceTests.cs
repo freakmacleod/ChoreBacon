@@ -118,6 +118,34 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task Deleting_the_account_forgets_the_local_session()
+    {
+        _store.Tokens = new AuthTokens("a", "r", DateTimeOffset.MaxValue);
+        var auth = CreateService();
+        await auth.TryRestoreSessionAsync(_ct);
+
+        await auth.DeleteAccountAsync(_ct);
+
+        Assert.Equal(1, _api.Deletions);
+        Assert.Null(_store.Tokens);
+        Assert.False(auth.IsLoggedIn);
+    }
+
+    [Fact]
+    public async Task A_refused_deletion_keeps_the_user_signed_in()
+    {
+        _store.Tokens = new AuthTokens("a", "r", DateTimeOffset.MaxValue);
+        _api.OnDeleteAccount = () => throw new ApiException(HttpStatusCode.Conflict, "last_parent", "");
+        var auth = CreateService();
+        await auth.TryRestoreSessionAsync(_ct);
+
+        await Assert.ThrowsAsync<ApiException>(() => auth.DeleteAccountAsync(_ct));
+
+        Assert.NotNull(_store.Tokens);
+        Assert.True(auth.IsLoggedIn);
+    }
+
+    [Fact]
     public async Task Logout_clears_tokens_and_revokes_the_server_session()
     {
         _store.Tokens = new AuthTokens("a", "r", DateTimeOffset.MaxValue);

@@ -14,6 +14,8 @@ internal sealed class FakeChoreBaconApi : IChoreBaconApi
     public Func<Task<IReadOnlyList<RewardDto>>> OnGetRewards { get; set; } = () => throw new NotSupportedException();
     public Func<Guid, Task<RedeemRewardResponse>> OnRedeemReward { get; set; } = _ => throw new NotSupportedException();
     public Func<Task<IReadOnlyList<AchievementDto>>> OnGetAchievements { get; set; } = () => throw new NotSupportedException();
+    public Func<Task> OnDeleteAccount { get; set; } = () => Task.CompletedTask;
+    public int Deletions { get; private set; }
 
     public List<Guid> Completed { get; } = [];
     public List<Guid> Redeemed { get; } = [];
@@ -28,6 +30,12 @@ internal sealed class FakeChoreBaconApi : IChoreBaconApi
     {
         Completed.Add(choreId);
         return OnCompleteChore(choreId);
+    }
+
+    public Task DeleteAccountAsync(CancellationToken cancellationToken)
+    {
+        Deletions++;
+        return OnDeleteAccount();
     }
 
     public Task<RedeemRewardResponse> RedeemRewardAsync(Guid rewardId, CancellationToken cancellationToken)

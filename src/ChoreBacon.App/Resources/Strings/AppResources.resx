@@ -376,4 +376,16 @@
   <data name="Error_MemberNotFound" xml:space="preserve">
     <value>Personen finns inte i familjen.</value>
   </data>
+  <data name="Dashboard_DeleteAccount" xml:space="preserve">
+    <value>Radera konto</value>
+  </data>
+  <data name="Dashboard_DeleteConfirm" xml:space="preserve">
+    <value>Ditt namn, din e-post och din inloggning tas bort och du lämnar din familj. Poänghistoriken finns kvar utan koppling till dig. Det går inte att ångra.</value>
+  </data>
+  <data name="Dashboard_DeleteAccept" xml:space="preserve">
+    <value>Radera</value>
+  </data>
+  <data name="Login_PrivacyPolicy" xml:space="preserve">
+    <value>Integritetspolicy</value>
+  </data>
 </root>
