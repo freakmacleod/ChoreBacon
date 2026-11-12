@@ -322,6 +322,9 @@
   <data name="Catalog_Saved" xml:space="preserve">
     <value>Sparat.</value>
   </data>
+  <data name="Catalog_PickIcon" xml:space="preserve">
+    <value>Välj ikon (annars används en standardikon)</value>
+  </data>
   <data name="Catalog_NewChore" xml:space="preserve">
     <value>Ny syssla för familjen</value>
   </data>
