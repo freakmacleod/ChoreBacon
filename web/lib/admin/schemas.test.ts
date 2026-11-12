@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { achievementInput, choreInput, parseForm, rewardInput } from "./schemas";
+import { achievementInput, choreInput, familyInput, familyMemberInput, parseForm, rewardInput } from "./schemas";
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -58,5 +58,15 @@ describe("admin form validation", () => {
     // Any kind's icon is fine; a well-formed but unknown key is not.
     expect(withIcon("dishes").ok).toBe(true);
     expect(withIcon("reward_unicorn_rides")).toMatchObject({ ok: false, errors: { icon: "Välj en ikon" } });
+  });
+
+  it("validates the family forms", () => {
+    expect(parseForm(familyInput, form({ name: " Familjen ", requiresApproval: "on" }))).toEqual({
+      ok: true,
+      data: { name: "Familjen", requiresApproval: true },
+    });
+    expect(parseForm(familyInput, form({ name: "" }))).toMatchObject({ ok: false, errors: { name: "Obligatoriskt" } });
+    const member = parseForm(familyMemberInput, form({ userId: "nope", role: "admin" }));
+    expect(member.ok ? {} : Object.keys(member.errors).sort()).toEqual(["role", "userId"]);
   });
 });

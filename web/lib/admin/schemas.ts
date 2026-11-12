@@ -57,9 +57,20 @@ export const achievementInput = z.object({
 
 export const roleInput = z.object({ role: z.enum(["user", "admin"]) });
 
+export const familyInput = z.object({
+  name: required(60),
+  requiresApproval: checkbox,
+});
+
+export const familyMemberInput = z.object({
+  userId: z.uuid({ error: "Välj en användare" }),
+  role: z.enum(["parent", "child"], { error: "Välj roll" }),
+});
+
 export type ChoreInput = z.infer<typeof choreInput>;
 export type RewardInput = z.infer<typeof rewardInput>;
 export type AchievementInput = z.infer<typeof achievementInput>;
+export type FamilyInput = z.infer<typeof familyInput>;
 
 export type FieldErrors = Partial<Record<string, string>>;
 export type Parsed<T> = { ok: true; data: T } | { ok: false; errors: FieldErrors };
