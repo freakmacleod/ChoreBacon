@@ -8,11 +8,21 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin/auth";
 import * as catalog from "@/lib/admin/catalog";
-import { type FieldErrors, achievementInput, choreInput, parseForm, rewardInput, roleInput } from "@/lib/admin/schemas";
+import * as families from "@/lib/admin/families";
+import {
+  type FieldErrors,
+  achievementInput,
+  choreInput,
+  familyInput,
+  familyMemberInput,
+  parseForm,
+  rewardInput,
+  roleInput,
+} from "@/lib/admin/schemas";
 import { ADMIN_COOKIE, adminCookieOptions, sealAdminSession } from "@/lib/auth/admin-session";
 import { isDevLoginEnabled, jwtSigningKey } from "@/lib/auth/config";
 import { upsertUser } from "@/lib/auth/session";
-import { sv } from "./strings";
+import { familySv, sv } from "./strings";
 
 // Every action re-checks the admin role itself: Server Actions are reachable by direct POST.
 
@@ -107,4 +117,48 @@ export async function setUserRole(form: FormData) {
   const result = await catalog.setUserRole(db, admin.id, id, parsed.data.role);
   if (!result.ok && result.reason === "cannot_demote_self") redirect("/admin/users?error=cannot_demote_self");
   refresh();
+}
+
+// ── Families ─────────────────────────────────────────────────────────────────
+
+export async function saveFamily(_: FormState, form: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = parseForm(familyInput, form);
+  if (!parsed.ok) return { errors: parsed.errors };
+  const id = idOf(form);
+  if (id && !(await families.updateFamily(db, id, parsed.data))) return { errors: { form: sv.common.notFound } };
+  redirect(`/admin/families/${id ?? (await families.createFamily(db, parsed.data))}`);
+}
+
+export async function addFamilyMember(_: FormState, form: FormData): Promise<FormState> {
+  await requireAdmin();
+  const familyId = idOf(form);
+  const parsed = parseForm(familyMemberInput, form);
+  if (!parsed.ok) return { errors: parsed.errors };
+  if (!familyId) return { errors: { form: sv.common.notFound } };
+  const result = await families.addMember(db, familyId, parsed.data.userId, parsed.data.role);
+  if (!result.ok) return { errors: { form: familySv.errors[result.reason] } };
+  refresh();
+  return {};
+}
+
+/** Role changes and removals report failures (the last parent) through ?error= on the family page. */
+async function memberChange(form: FormData, change: (familyId: string, userId: string) => Promise<families.MemberResult>) {
+  await requireAdmin();
+  const familyId = idOf(form);
+  const userId = form.get("userId");
+  if (!familyId || typeof userId !== "string") return;
+  const result = await change(familyId, userId);
+  if (!result.ok) redirect(`/admin/families/${familyId}?error=${result.reason}`);
+  refresh();
+}
+
+export async function setFamilyMemberRole(form: FormData) {
+  const role = form.get("role");
+  if (role !== "parent" && role !== "child") return;
+  await memberChange(form, (familyId, userId) => families.setMemberRole(db, familyId, userId, role));
+}
+
+export async function removeFamilyMember(form: FormData) {
+  await memberChange(form, (familyId, userId) => families.removeMember(db, familyId, userId));
 }

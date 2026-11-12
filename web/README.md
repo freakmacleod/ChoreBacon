@@ -128,6 +128,10 @@ transaction; they are skipped when that file is missing.
 - **Icons:** picked from a grid, not typed. The set lives in `lib/icons/catalog-icons.json`, which the app embeds as well, so
   the admin and the app always agree. Only keys from the set are accepted. Keys are stored in the database: add new ones,
   never rename or remove one. A new icon shows in the app after the next app build (older builds show a default).
+- **Families:** the Familjer page lists every family. An admin can create a family, add users who are not yet in one (as
+  parent or child), change roles and take members out, with the same rules as the app: one family per user, and a family
+  with members always keeps a parent. The invite code is shown so someone can join from the app. Parents still tailor the
+  catalog and approve chores in the app.
 - **Stock:** an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.
 - **Roles:** the first admin is granted with `npm run admin:grant -- --email … --production` after that person has signed in
   once. After that, use the Användare page. An admin cannot remove their own admin role.
