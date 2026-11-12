@@ -1,0 +1,78 @@
+{
+  "$comment": "The icon set for chores, rewards and achievements: the admin icon picker and the app (embedded resource) both read this file. Keys are stored in the database, so never rename or remove one; add new keys instead. Emoji are placeholders until real artwork exists.",
+  "groups": [
+    {
+      "kind": "chore",
+      "fallback": "chore_default",
+      "icons": [
+        { "key": "dishes", "glyph": "🍽️", "label": "Disk" },
+        { "key": "vacuum", "glyph": "🧹", "label": "Städa" },
+        { "key": "trash", "glyph": "🗑️", "label": "Sopor" },
+        { "key": "recycling", "glyph": "♻️", "label": "Återvinning" },
+        { "key": "laundry", "glyph": "🧺", "label": "Tvätt" },
+        { "key": "bathroom", "glyph": "🛁", "label": "Badrum" },
+        { "key": "bed", "glyph": "🛏️", "label": "Bädda" },
+        { "key": "tidy_room", "glyph": "🧸", "label": "Plocka undan" },
+        { "key": "cooking", "glyph": "🍳", "label": "Laga mat" },
+        { "key": "table", "glyph": "🍴", "label": "Duka" },
+        { "key": "shopping", "glyph": "🛒", "label": "Handla" },
+        { "key": "windows", "glyph": "🪟", "label": "Fönster" },
+        { "key": "plants", "glyph": "🪴", "label": "Vattna blommor" },
+        { "key": "lawn", "glyph": "🌱", "label": "Trädgård" },
+        { "key": "leaves", "glyph": "🍂", "label": "Kratta löv" },
+        { "key": "snow", "glyph": "❄️", "label": "Skotta snö" },
+        { "key": "pet", "glyph": "🐾", "label": "Husdjur" },
+        { "key": "dog_walk", "glyph": "🐕", "label": "Rasta hunden" },
+        { "key": "car", "glyph": "🚗", "label": "Tvätta bilen" },
+        { "key": "homework", "glyph": "📚", "label": "Läxor" },
+        { "key": "teeth", "glyph": "🪥", "label": "Borsta tänderna" },
+        { "key": "chore_default", "glyph": "🧽", "label": "Övrigt" }
+      ]
+    },
+    {
+      "kind": "reward",
+      "fallback": "reward_default",
+      "icons": [
+        { "key": "reward_screen", "glyph": "📱", "label": "Skärmtid" },
+        { "key": "reward_game", "glyph": "🎮", "label": "Spel" },
+        { "key": "reward_movie", "glyph": "🎬", "label": "Film" },
+        { "key": "reward_dinner", "glyph": "🍝", "label": "Välja middag" },
+        { "key": "reward_pizza", "glyph": "🍕", "label": "Pizza" },
+        { "key": "reward_icecream", "glyph": "🍦", "label": "Glass" },
+        { "key": "reward_candy", "glyph": "🍬", "label": "Godis" },
+        { "key": "reward_late", "glyph": "🌙", "label": "Vara uppe sent" },
+        { "key": "reward_skip", "glyph": "⏭️", "label": "Slippa en syssla" },
+        { "key": "reward_money", "glyph": "💵", "label": "Veckopeng" },
+        { "key": "reward_toy", "glyph": "🧩", "label": "Leksak" },
+        { "key": "reward_book", "glyph": "📖", "label": "Bok" },
+        { "key": "reward_outing", "glyph": "🎡", "label": "Utflykt" },
+        { "key": "reward_sleepover", "glyph": "🏕️", "label": "Övernattning" },
+        { "key": "reward_sport", "glyph": "⚽", "label": "Sport" },
+        { "key": "reward_default", "glyph": "🎁", "label": "Övrigt" }
+      ]
+    },
+    {
+      "kind": "achievement",
+      "fallback": "achievement_default",
+      "icons": [
+        { "key": "ach_first", "glyph": "👣", "label": "Första steget" },
+        { "key": "ach_10", "glyph": "💪", "label": "Stark" },
+        { "key": "ach_50", "glyph": "🏅", "label": "Medalj" },
+        { "key": "ach_100", "glyph": "👑", "label": "Krona" },
+        { "key": "ach_pts100", "glyph": "💰", "label": "Pengapåse" },
+        { "key": "ach_pts500", "glyph": "💎", "label": "Diamant" },
+        { "key": "ach_streak3", "glyph": "🔥", "label": "Eld" },
+        { "key": "ach_streak7", "glyph": "⚡", "label": "Blixt" },
+        { "key": "ach_streak30", "glyph": "🏆", "label": "Pokal" },
+        { "key": "ach_spend", "glyph": "🛍️", "label": "Shopping" },
+        { "key": "ach_star", "glyph": "🌟", "label": "Stjärna" },
+        { "key": "ach_rocket", "glyph": "🚀", "label": "Raket" },
+        { "key": "ach_rainbow", "glyph": "🌈", "label": "Regnbåge" },
+        { "key": "ach_unicorn", "glyph": "🦄", "label": "Enhörning" },
+        { "key": "ach_target", "glyph": "🎯", "label": "Mitt i prick" },
+        { "key": "ach_bacon", "glyph": "🥓", "label": "Bacon" },
+        { "key": "achievement_default", "glyph": "🏆", "label": "Övrigt" }
+      ]
+    }
+  ]
+}
