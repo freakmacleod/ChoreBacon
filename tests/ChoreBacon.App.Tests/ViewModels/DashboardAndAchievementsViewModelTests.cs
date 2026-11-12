@@ -51,6 +51,22 @@ public class DashboardViewModelTests
     }
 
     [Fact]
+    public async Task Shows_the_family_or_explains_the_shared_catalog()
+    {
+        _api.OnGetProgress = () => Task.FromResult(Dto.ProgressInFamily("Familjen Andersson"));
+        var vm = new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs());
+        await vm.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(string.Format(ChoreBacon.Resources.Strings.AppResources.Dashboard_Family, "Familjen Andersson"), vm.FamilyText);
+
+        _api.OnGetProgress = () => Task.FromResult(Dto.Progress());
+        await vm.LoadCommand.ExecuteAsync(null);
+        Assert.Equal(ChoreBacon.Resources.Strings.AppResources.Dashboard_NoFamily, vm.FamilyText);
+
+        await vm.NavigateToFamilyCommand.ExecuteAsync(null);
+        Assert.Equal([Routes.Family], _navigator.Routes);
+    }
+
+    [Fact]
     public async Task Logout_ends_the_session_and_shows_login()
     {
         var vm = new DashboardViewModel(_api, _auth, _navigator, new FakeDialogs());

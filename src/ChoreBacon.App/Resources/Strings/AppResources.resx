@@ -203,7 +203,7 @@
     <value>Du är inte med i någon familj</value>
   </data>
   <data name="Family_NoFamilyText" xml:space="preserve">
-    <value>Skapa en familj och bjud in de andra, eller gå med i en familj med en inbjudningskod.</value>
+    <value>Sysslorna, belöningarna och prestationerna finns redan för alla – du behöver ingen familj för att börja. Med en familj kan föräldrar anpassa allt för just er.</value>
   </data>
   <data name="Family_Create" xml:space="preserve">
     <value>Skapa familj</value>
@@ -387,5 +387,26 @@
   </data>
   <data name="Login_PrivacyPolicy" xml:space="preserve">
     <value>Integritetspolicy</value>
+  </data>
+  <data name="Family_WhatItDoes" xml:space="preserve">
+    <value>I en familj kan föräldrar:
+• stänga av sysslor och belöningar ni inte vill ha, och ändra poäng och priser
+• lägga till familjens egna sysslor och belöningar
+• godkänna barnens sysslor innan poängen räknas
+• lämna ut inlösta belöningar
+
+Prestationer är samma för alla. Skapa en familj och dela inbjudningskoden, eller gå med med en kod du fått.</value>
+  </data>
+  <data name="Family_ParentHint" xml:space="preserve">
+    <value>Under Familjens sysslor och belöningar anpassar du katalogen för familjen. Det du lägger till syns bara för er och märks med "Familjens".</value>
+  </data>
+  <data name="Common_FamilyItem" xml:space="preserve">
+    <value>Familjens</value>
+  </data>
+  <data name="Dashboard_Family" xml:space="preserve">
+    <value>Familj: {0}</value>
+  </data>
+  <data name="Dashboard_NoFamily" xml:space="preserve">
+    <value>Ingen familj – du ser den gemensamma katalogen. Tryck här för att skapa eller gå med i en familj.</value>
   </data>
 </root>

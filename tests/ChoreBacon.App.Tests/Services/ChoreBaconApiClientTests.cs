@@ -26,7 +26,7 @@ public class ChoreBaconApiClientTests
             [{"id":"a83ee39f-dd1e-471c-8925-c50eb5c76dac","title":"Bädda sängen","description":"Bädda din säng ordentligt","icon":"bed",
               "points":5,"frequency":"daily","completedThisPeriod":true,"completionStatus":"approved"},
              {"id":"b83ee39f-dd1e-471c-8925-c50eb5c76dac","title":"Tvätta","description":"","icon":"laundry",
-              "points":20,"frequency":"weekly","completedThisPeriod":false,"completionStatus":null}]
+              "points":20,"frequency":"weekly","completedThisPeriod":false,"completionStatus":null,"isFamilyItem":true}]
             """;
 
         var chores = await Client(HttpStatusCode.OK, json).GetChoresAsync(_ct);
@@ -35,6 +35,8 @@ public class ChoreBaconApiClientTests
         Assert.Equal(2, chores.Count);
         Assert.Equal((ChoreFrequency.Daily, true, CompletionStatus.Approved), (chores[0].Frequency, chores[0].CompletedThisPeriod, chores[0].CompletionStatus));
         Assert.Equal((ChoreFrequency.Weekly, false, (CompletionStatus?)null), (chores[1].Frequency, chores[1].CompletedThisPeriod, chores[1].CompletionStatus));
+        // Older servers omit isFamilyItem: it then means a global chore.
+        Assert.Equal([false, true], chores.Select(c => c.IsFamilyItem));
     }
 
     [Fact]
@@ -109,12 +111,13 @@ public class ChoreBaconApiClientTests
 
         var progressJson = $$"""
             {"balance":10,"lifetimeEarned":10,"pointsSpent":0,"choresCompleted":1,"streakDays":1,
-             "choresDoneThisPeriod":1,"choresTotal":8,"recentAchievements":[{{Achievement}}]}
+             "choresDoneThisPeriod":1,"choresTotal":8,"recentAchievements":[{{Achievement}}],"familyName":"Familjen E2E"}
             """;
         var progress = await Client(HttpStatusCode.OK, progressJson).GetProgressAsync(_ct);
         Assert.Equal("https://api.test/api/v1/me/progress", _requests.Last().RequestUri!.ToString());
         Assert.Equal((10, 10, 1, 1, 8), (progress.Balance, progress.LifetimeEarned, progress.StreakDays, progress.ChoresDoneThisPeriod, progress.ChoresTotal));
         Assert.Single(progress.RecentAchievements);
+        Assert.Equal("Familjen E2E", progress.FamilyName);
     }
 
     private sealed class StubHandler(List<HttpRequestMessage> requests, HttpStatusCode status, string json) : HttpMessageHandler

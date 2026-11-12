@@ -46,6 +46,8 @@
                                 <Label Text="{Binding Reward.Icon, Converter={StaticResource IconKeyConverter}}" FontSize="32" HorizontalOptions="Center" />
                                 <Label Text="{Binding Reward.Title}" FontSize="15" FontAttributes="Bold"
                                        HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                                <Label Text="{x:Static strings:AppResources.Common_FamilyItem}" FontSize="11" HorizontalOptions="Center"
+                                       TextColor="{AppThemeBinding Light=#9C27B0, Dark=#CE93D8}" IsVisible="{Binding Reward.IsFamilyItem}" />
                                 <Label Text="{Binding Reward.Description}" FontSize="12" TextColor="Gray"
                                        HorizontalOptions="Center" HorizontalTextAlignment="Center" MaxLines="2" />
                                 <Label Text="{Binding StockText}" FontSize="12" TextColor="Gray" HorizontalOptions="Center"

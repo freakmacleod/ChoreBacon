@@ -19,6 +19,7 @@
                 <VerticalStackLayout Spacing="12" IsVisible="{Binding HasNoFamily}">
                     <Label Text="{x:Static strings:AppResources.Family_NoFamilyTitle}" FontSize="20" FontAttributes="Bold" />
                     <Label Text="{x:Static strings:AppResources.Family_NoFamilyText}" FontSize="14" TextColor="Gray" />
+                    <Label Text="{x:Static strings:AppResources.Family_WhatItDoes}" FontSize="14" />
                     <Button Text="{x:Static strings:AppResources.Family_Create}" Command="{Binding CreateCommand}"
                             BackgroundColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" TextColor="White" CornerRadius="10" />
                     <Button Text="{x:Static strings:AppResources.Family_Join}" Command="{Binding JoinCommand}"
@@ -39,6 +40,7 @@
                         <VerticalStackLayout Spacing="8">
                             <Label Text="{Binding InviteCodeText}" FontSize="18" FontAttributes="Bold" />
                             <Label Text="{x:Static strings:AppResources.Family_InviteHint}" FontSize="12" TextColor="Gray" />
+                            <Label Text="{x:Static strings:AppResources.Family_ParentHint}" FontSize="12" TextColor="Gray" />
                             <Button Text="{x:Static strings:AppResources.Family_NewCode}" Command="{Binding NewInviteCodeCommand}"
                                     HorizontalOptions="Start" HeightRequest="36" FontSize="13" CornerRadius="8" />
                             <Button Text="{Binding ApprovalText}" Command="{Binding ToggleApprovalCommand}"

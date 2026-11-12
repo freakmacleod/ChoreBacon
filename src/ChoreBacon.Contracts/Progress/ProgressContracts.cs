@@ -49,6 +49,7 @@ public enum AchievementRarity
 }
 
 /// <param name="CompletedThisPeriod">Done in the current Stockholm window (today, this ISO week, this month, or ever).</param>
+/// <param name="IsFamilyItem">The family's own chore (false for the global catalog).</param>
 public sealed record ChoreDto(
     Guid Id,
     string Title,
@@ -57,7 +58,8 @@ public sealed record ChoreDto(
     int Points,
     ChoreFrequency Frequency,
     bool CompletedThisPeriod,
-    CompletionStatus? CompletionStatus);
+    CompletionStatus? CompletionStatus,
+    bool IsFamilyItem = false);
 
 public sealed record CompletionDto(Guid Id, Guid ChoreId, string LocalDate, string PeriodKey, CompletionStatus Status, DateTimeOffset CompletedAt);
 
@@ -70,7 +72,8 @@ public sealed record CompleteChoreResponse(
     IReadOnlyList<AchievementDto> UnlockedAchievements);
 
 /// <param name="Stock">Null = unlimited, 0 = sold out.</param>
-public sealed record RewardDto(Guid Id, string Title, string Description, string Icon, int Cost, int? Stock);
+/// <param name="IsFamilyItem">The family's own reward (false for the global catalog).</param>
+public sealed record RewardDto(Guid Id, string Title, string Description, string Icon, int Cost, int? Stock, bool IsFamilyItem = false);
 
 public sealed record RedemptionDto(Guid Id, Guid RewardId, int Cost, RedemptionStatus Status, DateTimeOffset CreatedAt);
 
@@ -101,7 +104,8 @@ public sealed record ProgressResponse(
     int StreakDays,
     int ChoresDoneThisPeriod,
     int ChoresTotal,
-    IReadOnlyList<AchievementDto> RecentAchievements);
+    IReadOnlyList<AchievementDto> RecentAchievements,
+    string? FamilyName = null);
 
 /// <summary>Stable error codes returned by the chore and reward endpoints.</summary>
 public static class ProgressErrorCodes
