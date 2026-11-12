@@ -15,6 +15,7 @@ export default function AchievementsPage() {
         title={sv.achievements.title}
         action={<Link href="/admin/achievements/new" className={buttonClass}>{sv.achievements.new}</Link>}
       />
+      <p className="mb-1 text-sm text-zinc-500">{sv.common.achievementsHint}</p>
       <p className="mb-4 text-sm text-zinc-500">{sv.common.deactivateHint}</p>
       <Suspense fallback={<p>{sv.loading}</p>}>
         <AchievementTable />
