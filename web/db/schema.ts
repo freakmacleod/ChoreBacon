@@ -198,11 +198,14 @@ export const achievements = pgTable(
     rarity: achievementRarity("rarity").notNull().default("common"),
     // Inactive achievements are hidden and never unlock; already unlocked ones stay unlocked.
     isActive: boolean("is_active").notNull().default(true),
+    // NULL = global; otherwise only that family's members see and unlock it (mirrors chores and rewards).
+    familyId: uuid("family_id").references(() => families.id, { onDelete: "cascade" }),
     createdAt: createdAt(),
   },
   (t) => [
     check("achievements_threshold_positive", sql`${t.threshold} > 0`),
     check("achievements_bonus_non_negative", sql`${t.bonusPoints} >= 0`),
+    index("achievements_family_idx").on(t.familyId),
   ],
 );
 

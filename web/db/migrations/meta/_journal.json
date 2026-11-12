@@ -50,6 +50,13 @@
       "when": 1794458072238,
       "tag": "0006_account_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794503372355,
+      "tag": "0007_achievement_scope",
+      "breakpoints": true
     }
   ]
 }
