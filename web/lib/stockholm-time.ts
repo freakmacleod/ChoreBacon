@@ -52,3 +52,37 @@ export function periodKey(frequency: Frequency, instant: Date): string {
       return "once";
   }
 }
+
+const wallClock = new Intl.DateTimeFormat("en-CA", {
+  timeZone: BUSINESS_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** Stockholm wall-clock time of `instant` as "YYYY-MM-DDTHH:mm" (the value of an `<input type="datetime-local">`). */
+export function stockholmDateTime(instant: Date): string {
+  const p = Object.fromEntries(wallClock.formatToParts(instant).map((part) => [part.type, part.value]));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+/**
+ * The instant at which Stockholm wall-clock time reads `local` ("YYYY-MM-DDTHH:mm"), or null if it is not
+ * a valid time. A time skipped by the spring DST switch resolves to the hour after it.
+ */
+export function fromStockholmDateTime(local: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local);
+  if (!match) return null;
+  const [y, mo, d, h, mi] = match.slice(1).map(Number);
+  const asUtc = Date.UTC(y, mo - 1, d, h, mi);
+  if (new Date(asUtc).toISOString().slice(0, 16) !== local) return null; // e.g. 2026-02-30 or 25:00
+  // Stockholm is UTC+1 or UTC+2: try both offsets and keep the one that reads back as `local`.
+  for (const offsetHours of [1, 2]) {
+    const instant = new Date(asUtc - offsetHours * 3_600_000);
+    if (stockholmDateTime(instant) === local) return instant;
+  }
+  return new Date(asUtc - 3_600_000);
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, isoWeek, periodKey, stockholmDate } from "./stockholm-time";
+import { addDays, fromStockholmDateTime, isoWeek, periodKey, stockholmDate, stockholmDateTime } from "./stockholm-time";
 
 const at = (iso: string) => new Date(iso);
 
@@ -65,5 +65,31 @@ describe("addDays", () => {
     expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
     expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
     expect(addDays("2026-03-29", 1)).toBe("2026-03-30"); // DST night is still one calendar day
+  });
+});
+
+describe("Stockholm wall-clock time (deadline inputs)", () => {
+  it("formats an instant as Stockholm local time", () => {
+    expect(stockholmDateTime(at("2026-11-20T17:00:00Z"))).toBe("2026-11-20T18:00");
+    expect(stockholmDateTime(at("2026-06-30T22:30:00Z"))).toBe("2026-07-01T00:30");
+  });
+
+  it("reads Stockholm local time back as the right instant in winter and summer", () => {
+    expect(fromStockholmDateTime("2026-11-20T18:00")?.toISOString()).toBe("2026-11-20T17:00:00.000Z");
+    expect(fromStockholmDateTime("2026-07-01T00:30")?.toISOString()).toBe("2026-06-30T22:30:00.000Z");
+  });
+
+  it("handles the DST switches", () => {
+    // 02:30 does not exist on 29 March (clocks jump to 03:00): the hour after it.
+    expect(fromStockholmDateTime("2026-03-29T02:30")?.toISOString()).toBe("2026-03-29T01:30:00.000Z");
+    // 02:30 happens twice on 25 October: either reading is fine, it must round-trip.
+    const ambiguous = fromStockholmDateTime("2026-10-25T02:30")!;
+    expect(stockholmDateTime(ambiguous)).toBe("2026-10-25T02:30");
+  });
+
+  it("rejects malformed and impossible times", () => {
+    expect(fromStockholmDateTime("2026-02-30T10:00")).toBeNull();
+    expect(fromStockholmDateTime("2026-11-20 18:00")).toBeNull();
+    expect(fromStockholmDateTime("")).toBeNull();
   });
 });
