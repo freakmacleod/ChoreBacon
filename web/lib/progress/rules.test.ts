@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { addDays } from "../stockholm-time";
-import { type AchievementDefinition, type ProgressStats, alreadyCompletedCode, planUnlocks, streakDays } from "./rules";
+import {
+  type AchievementDefinition,
+  type ProgressStats,
+  alreadyCompletedCode,
+  comboComplete,
+  comboWindow,
+  planUnlocks,
+  streakDays,
+} from "./rules";
 
 const stats = (s: Partial<ProgressStats>): ProgressStats => ({
   balance: 0,
@@ -87,5 +95,31 @@ describe("alreadyCompletedCode (business rule 2)", () => {
     expect(alreadyCompletedCode("weekly")).toBe("chore_already_completed_this_week");
     expect(alreadyCompletedCode("monthly")).toBe("chore_already_completed_this_month");
     expect(alreadyCompletedCode("once")).toBe("chore_already_completed");
+  });
+});
+
+describe("comboWindow (combos are measured per Stockholm day or ISO week)", () => {
+  it("is the day itself for a day combo", () => {
+    expect(comboWindow("day", "2026-11-13")).toEqual({ key: "2026-11-13", from: "2026-11-13", to: "2026-11-13" });
+  });
+
+  it("is Monday to Sunday for a week combo, whichever day the completion is on", () => {
+    const week = { key: "2026-W46", from: "2026-11-09", to: "2026-11-15" };
+    expect(comboWindow("week", "2026-11-09")).toEqual(week);
+    expect(comboWindow("week", "2026-11-13")).toEqual(week);
+    expect(comboWindow("week", "2026-11-15")).toEqual(week);
+    expect(comboWindow("week", "2026-11-16").key).toBe("2026-W47");
+  });
+
+  it("handles a week across the new year (ISO year of the Thursday)", () => {
+    expect(comboWindow("week", "2027-01-01")).toEqual({ key: "2026-W53", from: "2026-12-28", to: "2027-01-03" });
+  });
+});
+
+describe("comboComplete", () => {
+  it("needs every chore of the combo", () => {
+    expect(comboComplete(["a", "b"], new Set(["a", "b", "c"]))).toBe(true);
+    expect(comboComplete(["a", "b"], new Set(["a"]))).toBe(false);
+    expect(comboComplete([], new Set(["a"]))).toBe(false);
   });
 });

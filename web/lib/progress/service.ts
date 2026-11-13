@@ -1,10 +1,13 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, between, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
 import {
   achievements,
   choreCompletions,
   choreFamilySettings,
   chores,
+  comboAwards,
+  comboChores,
+  combos,
   families,
   familyMembers,
   pointLedger,
@@ -15,7 +18,7 @@ import {
   users,
 } from "../../db/schema";
 import { type Frequency, periodKey, stockholmDate } from "../stockholm-time";
-import { type ProgressStats, alreadyCompletedCode, planUnlocks, streakDays } from "./rules";
+import { type ProgressStats, alreadyCompletedCode, comboComplete, comboWindow, planUnlocks, streakDays } from "./rules";
 
 // The API is the source of truth for points, completions, redemptions and achievements. Every write
 // runs in one transaction that first locks the user's row, so a user's balance and achievement checks
@@ -227,10 +230,12 @@ export async function completeChore(exec: Executor, userId: string, choreId: str
     if (!completion) return fail(409, alreadyCompletedCode(chore.frequency as Frequency), "Already completed in this period");
 
     let unlocked: UnlockedAchievement[] = [];
+    let comboBonuses: ComboBonus[] = [];
     if (!needsApproval) {
       await tx
         .insert(pointLedger)
         .values({ userId, delta: chore.points, reason: "chore_completed", refId: completion.id, createdAt: now });
+      comboBonuses = await awardCombos(tx, userId, { choreId, localDate: completion.localDate }, now);
       unlocked = await unlockAchievements(tx, userId, now);
     }
     const { balance } = await loadStats(tx, userId, now);
@@ -242,14 +247,18 @@ export async function completeChore(exec: Executor, userId: string, choreId: str
       pointsPending: needsApproval ? chore.points : 0,
       balance,
       unlockedAchievements: unlocked,
+      comboBonuses,
     };
   });
 }
 
-/** Books an approved completion's points (called by a parent's approval). Call inside a transaction. */
+/**
+ * Books an approved completion's points (called by a parent's approval), then any combo it completes
+ * (measured from the day the chore was done, not the day it was approved). Call inside a transaction.
+ */
 export async function bookApprovedCompletion(
   tx: Executor,
-  completion: { id: string; userId: string; points: number },
+  completion: { id: string; userId: string; points: number; choreId: string; localDate: string },
   now: Date,
 ) {
   await lockUser(tx, completion.userId);
@@ -260,7 +269,132 @@ export async function bookApprovedCompletion(
     refId: completion.id,
     createdAt: now,
   });
-  return unlockAchievements(tx, completion.userId, now);
+  const comboBonuses = await awardCombos(tx, completion.userId, completion, now);
+  return { unlockedAchievements: await unlockAchievements(tx, completion.userId, now), comboBonuses };
+}
+
+// ── Combos ───────────────────────────────────────────────────────────────────
+
+export type ComboBonus = { comboId: string; title: string; icon: string; bonusPoints: number };
+
+/**
+ * Active combos for a family (or solo users): global ones plus the family's own, and only those whose
+ * chores are all visible to it — a combo with a switched-off chore could never be completed.
+ */
+async function visibleCombos(exec: Executor, familyId: string | null) {
+  const visibleChores = new Map((await resolvedChores(exec, familyId)).map((c) => [c.id, c]));
+  const rows = await exec
+    .select({
+      id: combos.id,
+      title: combos.title,
+      description: combos.description,
+      icon: combos.icon,
+      bonusPoints: combos.bonusPoints,
+      period: combos.period,
+      isFamilyItem: sql<boolean>`${combos.familyId} is not null`,
+    })
+    .from(combos)
+    .where(and(eq(combos.isActive, true), familyId ? or(isNull(combos.familyId), eq(combos.familyId, familyId)) : isNull(combos.familyId)))
+    .orderBy(asc(combos.period), asc(combos.title));
+  if (rows.length === 0) return { combos: [], visibleChores };
+
+  const links = await exec
+    .select({ comboId: comboChores.comboId, choreId: comboChores.choreId })
+    .from(comboChores)
+    .where(inArray(comboChores.comboId, rows.map((r) => r.id)));
+  const choreIds = Map.groupBy(links, (l) => l.comboId);
+  const withChores = rows
+    .map((combo) => ({ ...combo, choreIds: (choreIds.get(combo.id) ?? []).map((l) => l.choreId) }))
+    .filter((combo) => combo.choreIds.length > 0 && combo.choreIds.every((id) => visibleChores.has(id)));
+  return { combos: withChores, visibleChores };
+}
+
+/**
+ * Pays the bonus of every combo the approved completion just finished: all the combo's chores approved
+ * within its day or ISO week. Once per user, combo and period (unique index). Call inside a transaction,
+ * after the completion's own points are booked.
+ */
+async function awardCombos(tx: Executor, userId: string, completion: { choreId: string; localDate: string }, now: Date) {
+  const familyId = (await membershipOf(tx, userId))?.familyId ?? null;
+  const candidates = (await visibleCombos(tx, familyId)).combos.filter((c) => c.choreIds.includes(completion.choreId));
+  const awarded: ComboBonus[] = [];
+  for (const combo of candidates) {
+    const window = comboWindow(combo.period, completion.localDate);
+    const done = await tx
+      .selectDistinct({ choreId: choreCompletions.choreId })
+      .from(choreCompletions)
+      .where(
+        and(
+          eq(choreCompletions.userId, userId),
+          eq(choreCompletions.status, "approved"),
+          inArray(choreCompletions.choreId, combo.choreIds),
+          between(choreCompletions.localDate, window.from, window.to),
+        ),
+      );
+    if (!comboComplete(combo.choreIds, new Set(done.map((d) => d.choreId)))) continue;
+
+    const [award] = await tx
+      .insert(comboAwards)
+      .values({ userId, comboId: combo.id, periodKey: window.key, bonusPoints: combo.bonusPoints, awardedAt: now })
+      .onConflictDoNothing()
+      .returning({ id: comboAwards.id });
+    if (!award) continue;
+    await tx
+      .insert(pointLedger)
+      .values({ userId, delta: combo.bonusPoints, reason: "combo_bonus", refId: award.id, createdAt: now });
+    awarded.push({ comboId: combo.id, title: combo.title, icon: combo.icon, bonusPoints: combo.bonusPoints });
+  }
+  return awarded;
+}
+
+/**
+ * The user's combos for the current day/week: each chore marked done (approved or waiting for approval)
+ * in the combo's window, and whether the bonus was already paid this period.
+ */
+export async function listCombos(exec: Executor, userId: string, now: Date) {
+  const familyId = (await membershipOf(exec, userId))?.familyId ?? null;
+  const { combos: visible, visibleChores } = await visibleCombos(exec, familyId);
+  if (visible.length === 0) return [];
+
+  const today = stockholmDate(now);
+  const week = comboWindow("week", today);
+  const completions = await exec
+    .select({ choreId: choreCompletions.choreId, localDate: choreCompletions.localDate, status: choreCompletions.status })
+    .from(choreCompletions)
+    .where(
+      and(
+        eq(choreCompletions.userId, userId),
+        ne(choreCompletions.status, "rejected"),
+        between(choreCompletions.localDate, week.from, week.to),
+      ),
+    );
+  const awards = await exec
+    .select({ comboId: comboAwards.comboId, periodKey: comboAwards.periodKey })
+    .from(comboAwards)
+    .where(and(eq(comboAwards.userId, userId), inArray(comboAwards.periodKey, [today, week.key])));
+  const awarded = new Set(awards.map((a) => `${a.comboId}|${a.periodKey}`));
+
+  return visible.map(({ choreIds, ...combo }) => {
+    const window = comboWindow(combo.period, today);
+    const inWindow = completions.filter((c) => c.localDate >= window.from && c.localDate <= window.to);
+    return {
+      ...combo,
+      chores: choreIds
+        .map((id) => {
+          const chore = visibleChores.get(id)!;
+          const statuses = inWindow.filter((c) => c.choreId === id).map((c) => c.status);
+          return {
+            choreId: id,
+            title: chore.title,
+            icon: chore.icon,
+            done: statuses.length > 0,
+            pending: statuses.length > 0 && !statuses.includes("approved"),
+          };
+        })
+        .sort((a, b) => a.title.localeCompare(b.title, "sv")),
+      awardedThisPeriod: awarded.has(`${combo.id}|${window.key}`),
+    };
+  });
 }
 
 // ── Rewards ──────────────────────────────────────────────────────────────────

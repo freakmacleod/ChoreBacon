@@ -217,6 +217,8 @@ export async function reviewCompletion(exec: Executor, userId: string, completio
         userId: choreCompletions.userId,
         status: choreCompletions.status,
         points: sql<number>`coalesce(${choreCompletions.points}, ${chores.points})`.mapWith(Number),
+        choreId: choreCompletions.choreId,
+        localDate: choreCompletions.localDate,
       })
       .from(choreCompletions)
       .innerJoin(chores, eq(chores.id, choreCompletions.choreId))
@@ -229,8 +231,8 @@ export async function reviewCompletion(exec: Executor, userId: string, completio
       .update(choreCompletions)
       .set({ status: approve ? "approved" : "rejected" })
       .where(eq(choreCompletions.id, completionId));
-    const unlocked = approve ? await bookApprovedCompletion(tx, completion, now) : [];
-    return { ok: true as const, status: approve ? ("approved" as const) : ("rejected" as const), unlockedAchievements: unlocked };
+    const booked = approve ? await bookApprovedCompletion(tx, completion, now) : { unlockedAchievements: [], comboBonuses: [] };
+    return { ok: true as const, status: approve ? ("approved" as const) : ("rejected" as const), ...booked };
   });
 }
 

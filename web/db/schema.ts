@@ -31,6 +31,7 @@ export const ledgerReason = pgEnum("ledger_reason", [
   "reward_redeemed",
   "achievement_bonus",
   "admin_adjustment",
+  "combo_bonus",
 ]);
 export const redemptionStatus = pgEnum("redemption_status", ["pending", "fulfilled", "cancelled"]);
 export const achievementRule = pgEnum("achievement_rule", [
@@ -39,6 +40,8 @@ export const achievementRule = pgEnum("achievement_rule", [
   "streak_days",
   "points_spent",
 ]);
+// A combo pays its bonus when all its chores are done within the same Stockholm day or ISO week.
+export const comboPeriod = pgEnum("combo_period", ["day", "week"]);
 export const achievementRarity = pgEnum("achievement_rarity", [
   "common",
   "uncommon",
@@ -209,6 +212,39 @@ export const achievements = pgTable(
   ],
 );
 
+// Combos: do all of a set of chores within the same day or ISO week (Europe/Stockholm) and get bonus
+// points once per period. Scoped like the rest of the catalog: global combos only contain global
+// chores, a family's combos may also contain the family's own chores.
+export const combos = pgTable(
+  "combos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    icon: text("icon").notNull().default("combo_default"),
+    bonusPoints: integer("bonus_points").notNull(),
+    period: comboPeriod("period").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    // NULL = global; otherwise only that family's members see and earn it.
+    familyId: uuid("family_id").references(() => families.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [check("combos_bonus_positive", sql`${t.bonusPoints} > 0`), index("combos_family_idx").on(t.familyId)],
+);
+
+export const comboChores = pgTable(
+  "combo_chores",
+  {
+    comboId: uuid("combo_id")
+      .notNull()
+      .references(() => combos.id, { onDelete: "cascade" }),
+    choreId: uuid("chore_id")
+      .notNull()
+      .references(() => chores.id),
+  },
+  (t) => [primaryKey({ columns: [t.comboId, t.choreId] }), index("combo_chores_chore_idx").on(t.choreId)],
+);
+
 // ── Progress ─────────────────────────────────────────────────────────────────
 
 export const choreCompletions = pgTable(
@@ -288,6 +324,25 @@ export const userAchievements = pgTable(
     unlockedAt: timestamp("unlocked_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.achievementId] })],
+);
+
+// One row per combo bonus paid; the unique index makes it once per user, combo and period.
+export const comboAwards = pgTable(
+  "combo_awards",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    comboId: uuid("combo_id")
+      .notNull()
+      .references(() => combos.id),
+    // 2026-11-10 (day) or 2026-W46 (week), Europe/Stockholm.
+    periodKey: text("period_key").notNull(),
+    bonusPoints: integer("bonus_points").notNull(),
+    awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("combo_awards_once_per_period_uq").on(t.userId, t.comboId, t.periodKey)],
 );
 
 // ── Auth ─────────────────────────────────────────────────────────────────────

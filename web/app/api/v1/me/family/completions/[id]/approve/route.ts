@@ -9,7 +9,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/me/famil
   if ("response" in auth) return auth.response;
   const { id } = await ctx.params;
   if (!isUuid(id)) return apiError(404, "completion_not_found", "No such completion in your family");
-  return respond(await reviewCompletion(db, auth.userId, id, true, new Date()), ({ status, unlockedAchievements }) =>
-    json({ status, unlockedAchievements }),
+  return respond(await reviewCompletion(db, auth.userId, id, true, new Date()), ({ status, unlockedAchievements, comboBonuses }) =>
+    json({ status, unlockedAchievements, comboBonuses }),
   );
 }
