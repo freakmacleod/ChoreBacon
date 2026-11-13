@@ -9,7 +9,7 @@ import { setChoreActive } from "../../actions";
 import { ActiveToggle } from "../../_components/ActiveToggle";
 import { ScopeCell, ScopeFilterBar, parseScopeFilter } from "../../_components/scope";
 import { PageHeader, StatusBadge, buttonClass, tableClass } from "../../_components/ui";
-import { sv } from "../../strings";
+import { formatDate, sv } from "../../strings";
 
 export default function ChoresPage({ searchParams }: PageProps<"/admin/chores">) {
   return (
@@ -28,15 +28,17 @@ async function ChoreTable({ searchParams }: Pick<PageProps<"/admin/chores">, "se
   await requireAdmin();
   const filter = parseScopeFilter((await searchParams).scope);
   const [chores, families] = await Promise.all([listChores(db, filter), familyOptions(db)]);
+  // requireAdmin has waited for the request, so reading the clock here is fine.
+  const now = new Date();
   return (
     <>
       <ScopeFilterBar filter={filter} families={families} />
-      {chores.length === 0 ? <p>{sv.common.empty}</p> : <ChoreTableRows chores={chores} />}
+      {chores.length === 0 ? <p>{sv.common.empty}</p> : <ChoreTableRows chores={chores} now={now} />}
     </>
   );
 }
 
-function ChoreTableRows({ chores }: { chores: Awaited<ReturnType<typeof listChores>> }) {
+function ChoreTableRows({ chores, now }: { chores: Awaited<ReturnType<typeof listChores>>; now: Date }) {
   return (
     <table className={tableClass}>
       <thead>
@@ -63,7 +65,16 @@ function ChoreTableRows({ chores }: { chores: Awaited<ReturnType<typeof listChor
               <ScopeCell familyId={chore.familyId} familyName={chore.familyName} />
             </td>
             <td>{chore.points}</td>
-            <td>{sv.chores.frequencies[chore.frequency]}</td>
+            <td>
+              {chore.expiresAt ? (
+                <span className={chore.expiresAt > now ? "text-orange-700 dark:text-orange-400" : ""}>
+                  ⏳ {sv.chores.temporary} {sv.chores.until} {formatDate(chore.expiresAt)}
+                  {chore.expiresAt <= now && <span className="ml-1 rounded bg-zinc-200 px-1 text-xs text-zinc-600">{sv.chores.expired}</span>}
+                </span>
+              ) : (
+                sv.chores.frequencies[chore.frequency]
+              )}
+            </td>
             <td className="text-xl" title={chore.icon}>
               {iconGlyph(chore.icon)}
             </td>

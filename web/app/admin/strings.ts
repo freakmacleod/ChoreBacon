@@ -58,6 +58,13 @@ export const sv = {
     points: "Poäng",
     frequency: "Hur ofta",
     frequencies: { daily: "Varje dag", weekly: "Varje vecka", monthly: "Varje månad", once: "En gång" } as Record<string, string>,
+    temporary: "Tidsbegränsad",
+    temporaryHint:
+      "Visas tills tiden gått ut och försvinner sedan om ingen gjort den. Görs en gång: den första i familjen som gör den tar den. Kan inte ingå i en kombo.",
+    deadline: "Sista tid (svensk tid)",
+    deadlinePassed: "Sista tiden har redan passerat.",
+    until: "till",
+    expired: "Utgången",
   },
   combos: {
     title: "Kombos",
@@ -69,10 +76,11 @@ export const sv = {
     period: "Gäller inom",
     periods: { day: "Samma dag", week: "Samma vecka" } as Record<string, string>,
     chores: "Sysslor i kombon",
-    choresHint: "Välj minst två. En global kombo kan bara innehålla globala sysslor; en familjs kombo även familjens egna.",
+    choresHint:
+      "Välj minst två. En global kombo kan bara innehålla globala sysslor; en familjs kombo även familjens egna. Tidsbegränsade sysslor kan inte ingå.",
     noChores: "Inga sysslor att välja för den här omfattningen.",
     inactiveChore: "inaktiv",
-    choreScope: "En eller flera sysslor hör inte till kombons omfattning (global eller familjen).",
+    choreScope: "En eller flera sysslor hör inte till kombons omfattning (global eller familjen), eller är tidsbegränsade.",
   },
   rewards: {
     title: "Belöningar",

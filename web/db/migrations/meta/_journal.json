@@ -64,6 +64,13 @@
       "when": 1794544989375,
       "tag": "0008_chore_combos",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794545521987,
+      "tag": "0009_temporary_chores",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { and, asc, between, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, between, desc, eq, gt, inArray, isNotNull, isNull, lte, ne, or, sql } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
 import {
   achievements,
@@ -137,9 +137,10 @@ const never = sql`false`;
 
 /**
  * Chores visible to a family (or to solo users when familyId is null): active global chores the family
- * has not switched off, with its points override, plus the family's own active chores.
+ * has not switched off, with its points override, plus the family's own active chores. Temporary chores
+ * only until their deadline.
  */
-function resolvedChores(exec: Executor, familyId: string | null) {
+function resolvedChores(exec: Executor, familyId: string | null, now: Date) {
   return exec
     .select({
       id: chores.id,
@@ -150,6 +151,8 @@ function resolvedChores(exec: Executor, familyId: string | null) {
       frequency: chores.frequency,
       // True for the family's own chores, false for global ones (also when the family changed their points).
       isFamilyItem: sql<boolean>`${chores.familyId} is not null`,
+      // Null for regular chores; the deadline of a temporary one.
+      expiresAt: chores.expiresAt,
     })
     .from(chores)
     .leftJoin(
@@ -159,6 +162,7 @@ function resolvedChores(exec: Executor, familyId: string | null) {
     .where(
       and(
         eq(chores.isActive, true),
+        or(isNull(chores.expiresAt), gt(chores.expiresAt, now)),
         or(
           and(isNull(chores.familyId), sql`coalesce(${choreFamilySettings.isActive}, true)`),
           familyId ? eq(chores.familyId, familyId) : never,
@@ -167,10 +171,41 @@ function resolvedChores(exec: Executor, familyId: string | null) {
     );
 }
 
-/** Visible chores with whether the user already did each one in its current frequency window. */
+/**
+ * Temporary chores that another member of the family already did (or is waiting for approval on): the
+ * first one to do it takes it, so it is gone for everyone else. A rejected completion frees it again.
+ */
+async function takenByOthers(exec: Executor, familyId: string | null, userId: string, choreIds: string[]) {
+  if (!familyId || choreIds.length === 0) return new Set<string>();
+  const taken = await exec
+    .selectDistinct({ choreId: choreCompletions.choreId })
+    .from(choreCompletions)
+    .innerJoin(familyMembers, eq(familyMembers.userId, choreCompletions.userId))
+    .where(
+      and(
+        inArray(choreCompletions.choreId, choreIds),
+        ne(choreCompletions.status, "rejected"),
+        eq(familyMembers.familyId, familyId),
+        ne(choreCompletions.userId, userId),
+      ),
+    );
+  return new Set(taken.map((t) => t.choreId));
+}
+
+/**
+ * Visible chores with whether the user already did each one in its current frequency window. Temporary
+ * chores come first (soonest deadline first), minus those another family member already took.
+ */
 export async function listChores(exec: Executor, userId: string, now: Date) {
   const membership = await membershipOf(exec, userId);
-  const rows = await resolvedChores(exec, membership?.familyId ?? null).orderBy(asc(chores.frequency), asc(chores.title));
+  const familyId = membership?.familyId ?? null;
+  const visible = await resolvedChores(exec, familyId, now).orderBy(
+    sql`${chores.expiresAt} asc nulls last`,
+    asc(chores.frequency),
+    asc(chores.title),
+  );
+  const taken = await takenByOthers(exec, familyId, userId, visible.filter((c) => c.expiresAt).map((c) => c.id));
+  const rows = visible.filter((c) => !taken.has(c.id));
 
   const keys = [...new Set((["daily", "weekly", "monthly", "once"] as const).map((f) => periodKey(f, now)))];
   const done = await exec
@@ -201,8 +236,21 @@ export async function completeChore(exec: Executor, userId: string, choreId: str
     const membership = await membershipOf(tx, userId);
 
     // The visible catalog is small (tens of rows), so resolve it and pick the chore.
-    const chore = (await resolvedChores(tx, membership?.familyId ?? null)).find((c) => c.id === choreId);
-    if (!chore) return fail(404, "chore_not_found", "No active chore with that id");
+    const familyId = membership?.familyId ?? null;
+    const chore = (await resolvedChores(tx, familyId, now)).find((c) => c.id === choreId);
+    if (!chore) {
+      const [expired] = await tx
+        .select({ id: chores.id })
+        .from(chores)
+        .where(and(eq(chores.id, choreId), eq(chores.isActive, true), lte(chores.expiresAt, now)));
+      return expired ? fail(409, "chore_expired", "The deadline has passed") : fail(404, "chore_not_found", "No active chore with that id");
+    }
+    if (chore.expiresAt) {
+      // Lock the chore so two members of a family cannot both take it at the same moment.
+      await tx.select({ id: chores.id }).from(chores).where(eq(chores.id, choreId)).for("update");
+      if ((await takenByOthers(tx, familyId, userId, [choreId])).size > 0)
+        return fail(409, "chore_taken", "Someone else in the family already did it");
+    }
 
     const needsApproval = membership?.role === "child" && membership.requiresApproval;
     const window = periodKey(chore.frequency, now);
@@ -281,8 +329,8 @@ export type ComboBonus = { comboId: string; title: string; icon: string; bonusPo
  * Active combos for a family (or solo users): global ones plus the family's own, and only those whose
  * chores are all visible to it — a combo with a switched-off chore could never be completed.
  */
-async function visibleCombos(exec: Executor, familyId: string | null) {
-  const visibleChores = new Map((await resolvedChores(exec, familyId)).map((c) => [c.id, c]));
+async function visibleCombos(exec: Executor, familyId: string | null, now: Date) {
+  const visibleChores = new Map((await resolvedChores(exec, familyId, now)).map((c) => [c.id, c]));
   const rows = await exec
     .select({
       id: combos.id,
@@ -316,7 +364,7 @@ async function visibleCombos(exec: Executor, familyId: string | null) {
  */
 async function awardCombos(tx: Executor, userId: string, completion: { choreId: string; localDate: string }, now: Date) {
   const familyId = (await membershipOf(tx, userId))?.familyId ?? null;
-  const candidates = (await visibleCombos(tx, familyId)).combos.filter((c) => c.choreIds.includes(completion.choreId));
+  const candidates = (await visibleCombos(tx, familyId, now)).combos.filter((c) => c.choreIds.includes(completion.choreId));
   const awarded: ComboBonus[] = [];
   for (const combo of candidates) {
     const window = comboWindow(combo.period, completion.localDate);
@@ -353,7 +401,7 @@ async function awardCombos(tx: Executor, userId: string, completion: { choreId: 
  */
 export async function listCombos(exec: Executor, userId: string, now: Date) {
   const familyId = (await membershipOf(exec, userId))?.familyId ?? null;
-  const { combos: visible, visibleChores } = await visibleCombos(exec, familyId);
+  const { combos: visible, visibleChores } = await visibleCombos(exec, familyId, now);
   if (visible.length === 0) return [];
 
   const today = stockholmDate(now);

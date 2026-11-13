@@ -1,0 +1,2 @@
+ALTER TABLE "chores" ADD COLUMN "expires_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "chores" ADD CONSTRAINT "chores_temporary_once" CHECK ("chores"."expires_at" IS NULL OR "chores"."frequency" = 'once');
