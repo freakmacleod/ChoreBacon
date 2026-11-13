@@ -370,6 +370,39 @@ export const refreshTokens = pgTable(
   (t) => [index("refresh_tokens_chain_idx").on(t.chainId), index("refresh_tokens_user_idx").on(t.userId)],
 );
 
+// ── Push notifications ───────────────────────────────────────────────────────
+
+// Firebase Cloud Messaging registration tokens, one row per device (a token moves to whoever signs in
+// on that device). Removed on sign-out, account deletion, and when FCM reports the token dead.
+export const deviceTokens = pgTable(
+  "device_tokens",
+  {
+    token: text("token").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    platform: text("platform").notNull(),
+    createdAt: createdAt(),
+    // Last time the app registered it; FCM tokens unused for months go stale.
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("device_tokens_user_idx").on(t.userId)],
+);
+
+// Scheduled notifications already sent, so a reminder slot that is triggered twice notifies once.
+export const notificationLog = pgTable(
+  "notification_log",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // e.g. "reminder:2026-11-13:16" (Stockholm date and slot hour).
+    key: text("key").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.key] })],
+);
+
 // ── Account deletion ─────────────────────────────────────────────────────────
 
 // Receipts for deletion requests (e.g. Facebook's data deletion callback), looked up by the code shown
