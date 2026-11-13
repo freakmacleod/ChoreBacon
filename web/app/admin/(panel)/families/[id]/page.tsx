@@ -59,7 +59,7 @@ async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]"
     );
   const detail = isUuid(id) ? await getFamilyDetail(db, id) : null;
   if (!detail) notFound();
-  const { family, members, ownChores, ownRewards, ownAchievements, choreChanges, rewardChanges } = detail;
+  const { family, members, ownChores, ownRewards, ownAchievements, ownCombos, choreChanges, rewardChanges } = detail;
   const { error } = await searchParams;
   const freeUsers = await usersWithoutFamily(db);
 
@@ -210,6 +210,35 @@ async function Detail({ params, searchParams }: PageProps<"/admin/families/[id]"
                 <td>{a.threshold}</td>
                 <td>
                   <StatusBadge active={a.isActive} labels={sv.common} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Section>
+
+      <Section title={familySv.ownCombosSection} empty={ownCombos.length === 0}>
+        <table className={tableClass}>
+          <thead>
+            <tr>
+              <th>{sv.common.title}</th>
+              <th>{sv.combos.bonus}</th>
+              <th>{sv.combos.period}</th>
+              <th>{sv.common.status}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ownCombos.map((c) => (
+              <tr key={c.id}>
+                <td>
+                  <Link href={`/admin/combos/${c.id}`} className="hover:underline">
+                    {c.title}
+                  </Link>
+                </td>
+                <td>+{c.bonusPoints}</td>
+                <td>{sv.combos.periods[c.period]}</td>
+                <td>
+                  <StatusBadge active={c.isActive} labels={sv.common} />
                 </td>
               </tr>
             ))}

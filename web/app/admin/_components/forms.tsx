@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import type { IconKind } from "@/lib/icons";
-import { type FormState, saveAchievement, saveChore, saveReward } from "../actions";
+import { type FormState, saveAchievement, saveChore, saveCombo, saveReward } from "../actions";
 import { sv } from "../strings";
 import { IconPicker } from "./icon-picker";
 import { Field, buttonClass, inputClass, secondaryButtonClass } from "./ui";
@@ -24,7 +24,18 @@ type Achievement = Scoped & {
   rarity: string;
   isActive: boolean;
 };
+type Combo = Scoped & {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  bonusPoints: number;
+  period: string;
+  choreIds: string[];
+  isActive: boolean;
+};
 export type FamilyOption = { id: string; name: string };
+export type ComboChoreOption = { id: string; title: string; icon: string; frequency: string; familyId: string | null; isActive: boolean };
 
 function Actions({ pending, back, error }: { pending: boolean; back: string; error?: string }) {
   return (
@@ -183,6 +194,65 @@ export function AchievementForm({ achievement, families }: { achievement?: Achie
         </select>
       </Field>
       <Actions pending={pending} back="/admin/achievements" error={state.errors?.form} />
+    </form>
+  );
+}
+
+export function ComboForm({
+  combo,
+  families,
+  chores,
+  glyphs,
+}: {
+  combo?: Combo;
+  families: FamilyOption[];
+  chores: ComboChoreOption[];
+  /** Icon glyph per chore id, resolved on the server. */
+  glyphs: Record<string, string>;
+}) {
+  const [state, action, pending] = useActionState(saveCombo, {});
+  // Which chores fit depends on the scope: picked above for a new combo, fixed for an existing one.
+  const [scope, setScope] = useState("global");
+  const familyId = combo ? combo.familyId : scope === "global" ? null : scope;
+  const selected = new Set(combo?.choreIds);
+  const choices = chores.filter(
+    (c) => (c.familyId === null || c.familyId === familyId) && (c.isActive || selected.has(c.id)),
+  );
+  return (
+    <form action={action} className="max-w-lg space-y-4">
+      <input type="hidden" name="id" value={combo?.id ?? ""} />
+      <ScopeField item={combo} families={families} error={state.errors?.scope} onChange={setScope} />
+      <Common kind="combo" item={combo} errors={state.errors} />
+      <Field label={sv.combos.bonus} name="bonusPoints" error={state.errors?.bonusPoints}>
+        <input id="bonusPoints" name="bonusPoints" type="number" min={1} defaultValue={combo?.bonusPoints ?? 20} required className={inputClass} />
+      </Field>
+      <Field label={sv.combos.period} name="period" error={state.errors?.period}>
+        <select id="period" name="period" defaultValue={combo?.period ?? "day"} className={inputClass}>
+          {options(sv.combos.periods)}
+        </select>
+      </Field>
+      <fieldset className="space-y-1">
+        <legend className="text-sm font-medium">{sv.combos.chores}</legend>
+        <p className="text-xs text-zinc-500">{sv.combos.choresHint}</p>
+        {choices.length === 0 && <p className="text-sm">{sv.combos.noChores}</p>}
+        <div className="grid gap-1 sm:grid-cols-2">
+          {choices.map((chore) => (
+            <label key={chore.id} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="choreIds" value={chore.id} defaultChecked={selected.has(chore.id)} />
+              <span aria-hidden>{glyphs[chore.id]}</span>
+              <span>
+                {chore.title}{" "}
+                <span className="text-xs text-zinc-500">
+                  ({sv.chores.frequencies[chore.frequency]}
+                  {chore.isActive ? "" : `, ${sv.combos.inactiveChore}`})
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+        {state.errors?.choreIds && <p className="text-xs text-red-600">{state.errors.choreIds}</p>}
+      </fieldset>
+      <Actions pending={pending} back="/admin/combos" error={state.errors?.form} />
     </form>
   );
 }
