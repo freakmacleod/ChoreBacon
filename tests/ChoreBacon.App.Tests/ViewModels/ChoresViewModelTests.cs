@@ -1,6 +1,7 @@
 using System.Net;
 using ChoreBacon.App.Tests.Fakes;
 using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Helpers;
 using ChoreBacon.Resources.Strings;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Ui;
@@ -177,5 +178,32 @@ public class ChoresViewModelTests
         await LoadWith(Dto.Chore());
         Assert.False(_vm.HasCombos);
         Assert.Empty(_vm.Combos);
+    }
+
+    [Fact]
+    public async Task A_temporary_chore_shows_its_deadline_in_Swedish_time()
+    {
+        // 17:00 UTC on Friday 20 Nov 2026 is 18:00 in Stockholm.
+        var item = await LoadWith(Dto.Chore("Kratta löv", frequency: ChoreFrequency.Once) with { ExpiresAt = new DateTimeOffset(2026, 11, 20, 17, 0, 0, TimeSpan.Zero) });
+
+        Assert.True(item.IsTemporary);
+        // Month abbreviations come from ICU ("nov" or "nov."); the day, weekday and Stockholm time are what matter.
+        Assert.StartsWith("⏳ Senast fre 20 nov", item.DeadlineText);
+        Assert.EndsWith(" 18:00", item.DeadlineText);
+        Assert.Equal(AppResources.Chores_Temporary, item.FrequencyText);
+    }
+
+    [Theory]
+    [InlineData(ProgressErrorCodes.ChoreTaken)]
+    [InlineData(ProgressErrorCodes.ChoreExpired)]
+    public async Task A_temporary_chore_that_was_taken_or_expired_disappears_with_the_reason(string code)
+    {
+        var item = await LoadWith(Dto.Chore("Kratta löv", frequency: ChoreFrequency.Once) with { ExpiresAt = DateTimeOffset.UtcNow.AddDays(1) });
+        _api.OnCompleteChore = _ => throw new ApiException(HttpStatusCode.Conflict, code, "");
+
+        await _vm.CompleteChoreCommand.ExecuteAsync(item);
+
+        Assert.Empty(_vm.Chores);
+        Assert.Equal(ApiMessages.For(code), _vm.ErrorMessage);
     }
 }

@@ -93,6 +93,9 @@ public partial class ChoresViewModel : ApiViewModel
         // Done elsewhere (another device, or the list was stale): show it as done.
         if (_completing is not null && ApiMessages.IsAlreadyCompleted(ex.Code))
             _completing.MarkCompleted(CompletionStatus.Approved);
+        // Past its deadline, or a sibling took it: it is no longer there.
+        if (_completing is not null && ApiMessages.IsChoreGone(ex.Code))
+            Chores.Remove(_completing);
         base.OnApiError(ex);
     }
 }
@@ -113,7 +116,14 @@ public partial class ChoreItemViewModel(ChoreDto chore) : ObservableObject
         : IsCompleted ? AppResources.Chores_Done
         : AppResources.Chores_Do;
 
-    public string FrequencyText => Chore.Frequency switch
+    public bool IsTemporary => Chore.ExpiresAt is not null;
+
+    /// <summary>The deadline of a temporary chore in Swedish time, e.g. "⏳ Senast fre 20 nov. 18:00".</summary>
+    public string DeadlineText => Chore.ExpiresAt is { } deadline
+        ? string.Format(SwedishTime.Culture, AppResources.Chores_Deadline, SwedishTime.ToStockholm(deadline))
+        : string.Empty;
+
+    public string FrequencyText => IsTemporary ? AppResources.Chores_Temporary : Chore.Frequency switch
     {
         ChoreFrequency.Daily => AppResources.Frequency_Daily,
         ChoreFrequency.Weekly => AppResources.Frequency_Weekly,

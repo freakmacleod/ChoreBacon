@@ -14,6 +14,8 @@ public static class ApiMessages
         ProgressErrorCodes.AlreadyCompletedThisMonth => AppResources.Error_AlreadyCompletedThisMonth,
         ProgressErrorCodes.AlreadyCompleted => AppResources.Error_AlreadyCompleted,
         ProgressErrorCodes.ChoreNotFound => AppResources.Error_ChoreNotFound,
+        ProgressErrorCodes.ChoreExpired => AppResources.Error_ChoreExpired,
+        ProgressErrorCodes.ChoreTaken => AppResources.Error_ChoreTaken,
         ProgressErrorCodes.RewardNotFound => AppResources.Error_RewardNotFound,
         ProgressErrorCodes.RewardOutOfStock => AppResources.Error_OutOfStock,
         ProgressErrorCodes.InsufficientPoints => AppResources.Error_InsufficientPoints,
@@ -26,6 +28,10 @@ public static class ApiMessages
         FamilyErrorCodes.MemberNotFound => AppResources.Error_MemberNotFound,
         _ => AppResources.Error_Generic,
     };
+
+    /// <summary>True for the codes that mean the chore is no longer there for this user (gone, past its deadline, or taken by someone else).</summary>
+    public static bool IsChoreGone(string code) => code is
+        ProgressErrorCodes.ChoreNotFound or ProgressErrorCodes.ChoreExpired or ProgressErrorCodes.ChoreTaken;
 
     /// <summary>True for the 409 codes that mean "already done in this window".</summary>
     public static bool IsAlreadyCompleted(string code) => code is

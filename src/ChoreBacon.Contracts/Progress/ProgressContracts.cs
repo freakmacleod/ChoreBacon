@@ -57,6 +57,7 @@ public enum ComboPeriod
 
 /// <param name="CompletedThisPeriod">Done in the current Stockholm window (today, this ISO week, this month, or ever).</param>
 /// <param name="IsFamilyItem">The family's own chore (false for the global catalog).</param>
+/// <param name="ExpiresAt">Set for a temporary chore: it disappears then if nobody has done it, and the first one in the family to do it takes it.</param>
 public sealed record ChoreDto(
     Guid Id,
     string Title,
@@ -66,7 +67,8 @@ public sealed record ChoreDto(
     ChoreFrequency Frequency,
     bool CompletedThisPeriod,
     CompletionStatus? CompletionStatus,
-    bool IsFamilyItem = false);
+    bool IsFamilyItem = false,
+    DateTimeOffset? ExpiresAt = null);
 
 public sealed record CompletionDto(Guid Id, Guid ChoreId, string LocalDate, string PeriodKey, CompletionStatus Status, DateTimeOffset CompletedAt);
 
@@ -145,6 +147,8 @@ public static class ProgressErrorCodes
     public const string AlreadyCompletedThisWeek = "chore_already_completed_this_week";
     public const string AlreadyCompletedThisMonth = "chore_already_completed_this_month";
     public const string AlreadyCompleted = "chore_already_completed";
+    public const string ChoreExpired = "chore_expired";
+    public const string ChoreTaken = "chore_taken";
     public const string RewardNotFound = "reward_not_found";
     public const string RewardOutOfStock = "reward_out_of_stock";
     public const string InsufficientPoints = "insufficient_points";

@@ -442,4 +442,16 @@ Prestationer är samma för alla. Skapa en familj och dela inbjudningskoden, ell
   <data name="Combos_Earned" xml:space="preserve">
     <value>🎰 Kombo klar: {0}! +{1} bonuspoäng</value>
   </data>
+  <data name="Error_ChoreExpired" xml:space="preserve">
+    <value>Tiden för den här sysslan har gått ut.</value>
+  </data>
+  <data name="Error_ChoreTaken" xml:space="preserve">
+    <value>Någon annan i familjen hann före!</value>
+  </data>
+  <data name="Chores_Deadline" xml:space="preserve">
+    <value>⏳ Senast {0:ddd d MMM HH:mm}</value>
+  </data>
+  <data name="Chores_Temporary" xml:space="preserve">
+    <value>Tidsbegränsad – först till kvarn</value>
+  </data>
 </root>
