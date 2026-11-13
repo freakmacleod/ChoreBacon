@@ -11,6 +11,7 @@ internal sealed class FakeChoreBaconApi : IChoreBaconApi
     public Func<Task<ProgressResponse>> OnGetProgress { get; set; } = () => throw new NotSupportedException();
     public Func<Task<IReadOnlyList<ChoreDto>>> OnGetChores { get; set; } = () => throw new NotSupportedException();
     public Func<Guid, Task<CompleteChoreResponse>> OnCompleteChore { get; set; } = _ => throw new NotSupportedException();
+    public Func<Task<IReadOnlyList<ComboDto>>> OnGetCombos { get; set; } = () => Task.FromResult<IReadOnlyList<ComboDto>>([]);
     public Func<Task<IReadOnlyList<RewardDto>>> OnGetRewards { get; set; } = () => throw new NotSupportedException();
     public Func<Guid, Task<RedeemRewardResponse>> OnRedeemReward { get; set; } = _ => throw new NotSupportedException();
     public Func<Task<IReadOnlyList<AchievementDto>>> OnGetAchievements { get; set; } = () => throw new NotSupportedException();
@@ -23,6 +24,7 @@ internal sealed class FakeChoreBaconApi : IChoreBaconApi
     public Task<MeResponse> GetMeAsync(CancellationToken cancellationToken) => OnGetMe();
     public Task<ProgressResponse> GetProgressAsync(CancellationToken cancellationToken) => OnGetProgress();
     public Task<IReadOnlyList<ChoreDto>> GetChoresAsync(CancellationToken cancellationToken) => OnGetChores();
+    public Task<IReadOnlyList<ComboDto>> GetCombosAsync(CancellationToken cancellationToken) => OnGetCombos();
     public Task<IReadOnlyList<RewardDto>> GetRewardsAsync(CancellationToken cancellationToken) => OnGetRewards();
     public Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken) => OnGetAchievements();
 

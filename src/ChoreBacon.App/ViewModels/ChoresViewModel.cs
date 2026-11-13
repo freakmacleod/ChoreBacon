@@ -22,6 +22,12 @@ public partial class ChoresViewModel : ApiViewModel
 
     public ObservableCollection<ChoreItemViewModel> Chores { get; } = [];
 
+    /// <summary>Bonus combos for today or this week, shown above the chores.</summary>
+    public ObservableCollection<ComboItemViewModel> Combos { get; } = [];
+
+    [ObservableProperty]
+    public partial bool HasCombos { get; set; }
+
     public ChoresViewModel(IChoreBaconApi api, INavigator navigator) : base(navigator)
     {
         _api = api;
@@ -34,13 +40,23 @@ public partial class ChoresViewModel : ApiViewModel
         StatusMessage = string.Empty;
         var chores = _api.GetChoresAsync(cancellationToken);
         var progress = _api.GetProgressAsync(cancellationToken);
-        await Task.WhenAll(chores, progress);
+        var combos = _api.GetCombosAsync(cancellationToken);
+        await Task.WhenAll(chores, progress, combos);
 
         Balance = progress.Result.Balance;
         Chores.Clear();
         foreach (var chore in chores.Result)
             Chores.Add(new ChoreItemViewModel(chore));
+        ShowCombos(combos.Result);
     }, cancellationToken);
+
+    private void ShowCombos(IReadOnlyList<ComboDto> combos)
+    {
+        Combos.Clear();
+        foreach (var combo in combos)
+            Combos.Add(new ComboItemViewModel(combo));
+        HasCombos = Combos.Count > 0;
+    }
 
     [RelayCommand]
     private async Task CompleteChoreAsync(ChoreItemViewModel item, CancellationToken cancellationToken)
@@ -59,7 +75,11 @@ public partial class ChoresViewModel : ApiViewModel
                 var headline = result.Completion.Status == CompletionStatus.Pending
                     ? string.Format(AppResources.Chores_PendingApproval, result.PointsPending, item.Chore.Title)
                     : string.Format(AppResources.Chores_PointsEarned, result.PointsEarned, item.Chore.Title);
-                StatusMessage = string.Join('\n', UnlockedLines(result.UnlockedAchievements).Prepend(headline));
+                var comboLines = (result.ComboBonuses ?? []).Select(c => string.Format(AppResources.Combos_Earned, c.Title, c.BonusPoints));
+                StatusMessage = string.Join('\n', comboLines.Concat(UnlockedLines(result.UnlockedAchievements)).Prepend(headline));
+                // The completion may tick a box in a combo; the API decides, so ask it again.
+                if (HasCombos)
+                    ShowCombos(await _api.GetCombosAsync(cancellationToken));
             }, cancellationToken);
         }
         finally
@@ -106,4 +126,21 @@ public partial class ChoreItemViewModel(ChoreDto chore) : ObservableObject
         IsCompleted = true;
         IsPending = status == CompletionStatus.Pending;
     }
+}
+
+public sealed class ComboItemViewModel(ComboDto combo)
+{
+    public ComboDto Combo { get; } = combo;
+
+    public string BonusText => string.Format(AppResources.Combos_Bonus, Combo.BonusPoints);
+
+    public string PeriodText => Combo.Period == ComboPeriod.Week ? AppResources.Combos_ThisWeek : AppResources.Combos_Today;
+
+    public string ProgressText => Combo.AwardedThisPeriod
+        ? AppResources.Combos_Awarded
+        : string.Format(AppResources.Combos_Progress, Combo.Chores.Count(c => c.Done), Combo.Chores.Count);
+
+    /// <summary>One line per chore: done, waiting for approval, or still to do.</summary>
+    public string ChoresText => string.Join('\n', Combo.Chores.Select(c => string.Format(
+        c.Pending ? AppResources.Combos_ChorePending : c.Done ? AppResources.Combos_ChoreDone : AppResources.Combos_ChoreTodo, c.Title)));
 }

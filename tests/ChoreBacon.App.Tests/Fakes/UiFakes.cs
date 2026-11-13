@@ -88,6 +88,13 @@ internal static class Dto
         new(new CompletionDto(Guid.NewGuid(), chore.Id, "2026-11-11", "2026-11-11", CompletionStatus.Pending, DateTimeOffset.UtcNow),
             0, chore.Points, balance, []);
 
+    public static ComboDto Combo(string title = "Morgonrutin", int bonus = 20, ComboPeriod period = ComboPeriod.Day,
+        bool awarded = false, params ComboChoreDto[] chores) =>
+        new(Guid.NewGuid(), title, "", "combo_fire", bonus, period, chores, awarded);
+
+    public static ComboChoreDto ComboChore(string title = "Diska", bool done = false, bool pending = false) =>
+        new(Guid.NewGuid(), title, "dishes", done, pending);
+
     public static RedeemRewardResponse Redeemed(RewardDto reward, int balance) =>
         new(new RedemptionDto(Guid.NewGuid(), reward.Id, reward.Cost, RedemptionStatus.Pending, DateTimeOffset.UtcNow), balance, []);
 }

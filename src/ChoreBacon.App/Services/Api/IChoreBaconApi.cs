@@ -13,6 +13,7 @@ public interface IChoreBaconApi
     Task<ProgressResponse> GetProgressAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<ChoreDto>> GetChoresAsync(CancellationToken cancellationToken);
     Task<CompleteChoreResponse> CompleteChoreAsync(Guid choreId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ComboDto>> GetCombosAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<RewardDto>> GetRewardsAsync(CancellationToken cancellationToken);
     Task<RedeemRewardResponse> RedeemRewardAsync(Guid rewardId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken);

@@ -412,4 +412,34 @@ Prestationer är samma för alla. Skapa en familj och dela inbjudningskoden, ell
   <data name="Dashboard_NoFamily" xml:space="preserve">
     <value>Ingen familj – du ser den gemensamma katalogen. Tryck här för att skapa eller gå med i en familj.</value>
   </data>
+  <data name="Combos_Title" xml:space="preserve">
+    <value>Kombos</value>
+  </data>
+  <data name="Combos_Bonus" xml:space="preserve">
+    <value>+{0} bonuspoäng</value>
+  </data>
+  <data name="Combos_Today" xml:space="preserve">
+    <value>Allt samma dag</value>
+  </data>
+  <data name="Combos_ThisWeek" xml:space="preserve">
+    <value>Allt samma vecka</value>
+  </data>
+  <data name="Combos_Progress" xml:space="preserve">
+    <value>{0} av {1} klara</value>
+  </data>
+  <data name="Combos_Awarded" xml:space="preserve">
+    <value>Bonusen är din! ✓</value>
+  </data>
+  <data name="Combos_ChoreDone" xml:space="preserve">
+    <value>✅ {0}</value>
+  </data>
+  <data name="Combos_ChorePending" xml:space="preserve">
+    <value>⏳ {0}</value>
+  </data>
+  <data name="Combos_ChoreTodo" xml:space="preserve">
+    <value>⬜ {0}</value>
+  </data>
+  <data name="Combos_Earned" xml:space="preserve">
+    <value>🎰 Kombo klar: {0}! +{1} bonuspoäng</value>
+  </data>
 </root>

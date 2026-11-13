@@ -47,7 +47,10 @@ public sealed record PendingCompletionDto(
     string LocalDate,
     DateTimeOffset CompletedAt);
 
-public sealed record ReviewCompletionResponse(CompletionStatus Status, IReadOnlyList<AchievementDto> UnlockedAchievements);
+public sealed record ReviewCompletionResponse(
+    CompletionStatus Status,
+    IReadOnlyList<AchievementDto> UnlockedAchievements,
+    IReadOnlyList<ComboBonusDto>? ComboBonuses = null);
 
 public sealed record PendingRedemptionDto(
     Guid Id,

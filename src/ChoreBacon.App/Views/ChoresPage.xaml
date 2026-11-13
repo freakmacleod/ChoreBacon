@@ -32,6 +32,46 @@
             <CollectionView ItemsSource="{Binding Chores}"
                             EmptyView="{x:Static strings:AppResources.Chores_Empty}"
                             Margin="0,8">
+                <CollectionView.Header>
+                    <VerticalStackLayout IsVisible="{Binding HasCombos}" Padding="16,0,16,8" Spacing="8">
+                        <Label Text="{x:Static strings:AppResources.Combos_Title}" FontSize="18" FontAttributes="Bold" />
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Combos}" Spacing="8">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ComboItemViewModel">
+                                    <Border Padding="16" StrokeThickness="2"
+                                            Stroke="{AppThemeBinding Light=#FFB74D, Dark=#E65100}"
+                                            BackgroundColor="{AppThemeBinding Light=#FFF8E1, Dark=#2A2118}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                            <Label Grid.Column="0" Text="{Binding Combo.Icon, Converter={StaticResource IconKeyConverter}}"
+                                                   FontSize="28" VerticalOptions="Start" />
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                <Label Text="{Binding Combo.Title}" FontSize="16" FontAttributes="Bold" />
+                                                <Label Text="{x:Static strings:AppResources.Common_FamilyItem}" FontSize="11"
+                                                       TextColor="{AppThemeBinding Light=#9C27B0, Dark=#CE93D8}" IsVisible="{Binding Combo.IsFamilyItem}" />
+                                                <Label FontSize="13">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="{Binding BonusText}" FontAttributes="Bold"
+                                                                  TextColor="{AppThemeBinding Light=#FF6B35, Dark=#FF8C5A}" />
+                                                            <Span Text=" · " TextColor="Gray" />
+                                                            <Span Text="{Binding PeriodText}" TextColor="Gray" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
+                                                </Label>
+                                                <Label Text="{Binding ChoresText}" FontSize="13" />
+                                                <Label Text="{Binding ProgressText}" FontSize="13" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light=#388E3C, Dark=#81C784}" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChoreItemViewModel">
                         <Border Margin="16,4" Padding="16" StrokeThickness="0"
