@@ -1,5 +1,5 @@
 {
-  "$comment": "The icon set for chores, rewards and achievements: the admin icon picker and the app (embedded resource) both read this file. Keys are stored in the database, so never rename or remove one; add new keys instead. Emoji are placeholders until real artwork exists.",
+  "$comment": "The icon set for chores, rewards, achievements and combos: the admin icon picker and the app (embedded resource) both read this file. Keys are stored in the database, so never rename or remove one; add new keys instead. Emoji are placeholders until real artwork exists.",
   "groups": [
     {
       "kind": "chore",
@@ -72,6 +72,21 @@
         { "key": "ach_target", "glyph": "🎯", "label": "Mitt i prick" },
         { "key": "ach_bacon", "glyph": "🥓", "label": "Bacon" },
         { "key": "achievement_default", "glyph": "🏆", "label": "Övrigt" }
+      ]
+    },
+    {
+      "kind": "combo",
+      "fallback": "combo_default",
+      "icons": [
+        { "key": "combo_lightning", "glyph": "⚡", "label": "Blixt" },
+        { "key": "combo_fire", "glyph": "🔥", "label": "Eld" },
+        { "key": "combo_star", "glyph": "🌟", "label": "Stjärna" },
+        { "key": "combo_rocket", "glyph": "🚀", "label": "Raket" },
+        { "key": "combo_target", "glyph": "🎯", "label": "Mitt i prick" },
+        { "key": "combo_puzzle", "glyph": "🧩", "label": "Pussel" },
+        { "key": "combo_chain", "glyph": "🔗", "label": "Kedja" },
+        { "key": "combo_magic", "glyph": "✨", "label": "Magi" },
+        { "key": "combo_default", "glyph": "🎰", "label": "Övrigt" }
       ]
     }
   ]

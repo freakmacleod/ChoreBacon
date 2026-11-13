@@ -20,12 +20,13 @@ describe("catalog icon set", () => {
     expect(iconGlyph("dishes")).toBe("🍽️");
     expect(iconGlyph("reward_unknown")).toBe("🎁");
     expect(iconGlyph("ach_unknown")).toBe("🏆");
+    expect(iconGlyph("combo_unknown")).toBe("🎰");
     expect(iconGlyph("whatever")).toBe(DEFAULT_GLYPH);
     expect(iconGlyph(null)).toBe(DEFAULT_GLYPH);
   });
 
   it("puts the item's own kind first in the picker", () => {
-    expect(iconGroupsFor("reward").map((g) => g.kind)).toEqual(["reward", "chore", "achievement"]);
+    expect(iconGroupsFor("reward").map((g) => g.kind)).toEqual(["reward", "chore", "achievement", "combo"]);
     expect(iconGroupsFor("achievement")[0].kind).toBe("achievement");
   });
 });

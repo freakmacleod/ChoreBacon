@@ -39,6 +39,8 @@ public class IconGlyphsTests
     [InlineData("dog_walk", "🐕")]
     [InlineData("reward_unknown", "🎁")]
     [InlineData("ach_unknown", "🏆")]
+    [InlineData("combo_fire", "🔥")]
+    [InlineData("combo_unknown", "🎰")]
     [InlineData("whatever", IconGlyphs.Default)]
     [InlineData(null, IconGlyphs.Default)]
     public void Icon_keys_map_to_glyphs_and_never_show_the_raw_key(string? key, string expected)
