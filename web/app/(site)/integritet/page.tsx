@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
   return (
     <article className={prose}>
       <h1>Integritetspolicy</h1>
-      <p className="text-sm text-zinc-500">Senast uppdaterad 12 november 2026</p>
+      <p className="text-sm text-zinc-500">Senast uppdaterad 13 november 2026</p>
       <p>
         Den här policyn beskriver hur ChoreBacon (appen och webbtjänsten på chorebacon.vercel.app) behandlar personuppgifter.
       </p>
@@ -35,7 +35,9 @@ export default function PrivacyPolicy() {
         </li>
         <li>
           <strong>Tekniska uppgifter:</strong> inloggningssessioner (sparade som hashvärden) och serverloggar hos vår
-          driftleverantör, till exempel IP-adress och tidpunkt, för drift och säkerhet.
+          driftleverantör, till exempel IP-adress och tidpunkt, för drift och säkerhet. Om du tillåter aviseringar sparar vi
+          också telefonens aviseringsadress (en token från Google Firebase), så att vi kan skicka påminnelser och berätta om
+          nya sysslor och bonusar.
         </li>
       </ul>
 
@@ -59,17 +61,21 @@ export default function PrivacyPolicy() {
       <ul>
         <li>Vercel Inc. – drift av webbtjänsten och API:t, med servrar i Frankfurt (EU).</li>
         <li>Neon – databasen, som lagras hos Amazon Web Services i Frankfurt (EU).</li>
-        <li>Google och Meta (Facebook) – endast för inloggning, enligt deras egna villkor.</li>
+        <li>Google och Meta (Facebook) – för inloggning, enligt deras egna villkor.</li>
+        <li>
+          Google (Firebase Cloud Messaging) – levererar aviseringar till din telefon, om du tillåter dem. En avisering
+          innehåller till exempel namnet på en syssla eller en kombo.
+        </li>
       </ul>
       <p>
-        Uppgifterna lagras inom EU. Vercel och Neon är amerikanska företag; om uppgifter i undantagsfall behandlas utanför EU
+        Uppgifterna lagras inom EU. Vercel, Neon och Google är amerikanska företag; om uppgifter i undantagsfall behandlas utanför EU
         sker det med skydd enligt EU:s standardavtalsklausuler eller EU–US Data Privacy Framework.
       </p>
 
       <h2>Hur länge vi sparar uppgifterna</h2>
       <p>
         Så länge du har ett konto. När du raderar kontot tar vi direkt bort ditt namn, din e-postadress, kopplingen till ditt
-        Google- eller Facebookkonto, dina inloggningar och ditt familjemedlemskap. Poänghistorik och gjorda sysslor finns kvar
+        Google- eller Facebookkonto, dina inloggningar, telefonens aviseringsadress och ditt familjemedlemskap. Poänghistorik och gjorda sysslor finns kvar
         utan koppling till dig, så att familjens historik stämmer. Serverloggar sparas en kort tid hos driftleverantören.
       </p>
 

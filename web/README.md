@@ -79,10 +79,12 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | GET / POST | `/api/v1/me/family/chores` \| `rewards` | Parents: the family's catalog view; POST adds a family-only item |
 | PATCH | `/api/v1/me/family/chores/{id}` \| `rewards/{id}` | Parents: edit a family-only item |
 | PUT | `/api/v1/me/family/chores/{id}/settings` \| `rewards/{id}/settings` | Parents: switch a global item off, override points/cost, set the family's stock |
+| PUT / DELETE | `/api/v1/me/devices` | `{ token, platform }` registers this device's FCM token for push; DELETE `{ token }` (before sign-out) → 204 |
+| GET / POST | `/api/cron/reminders` | `Authorization: Bearer <CRON_SECRET>` only: sends the current reminder slot. 401 otherwise |
 
 Errors are always `{ "error": { "code", "message" } }`; the app maps `code` to Swedish text.
 
-All endpoints except health and auth need `Authorization: Bearer <access token>`.
+All endpoints except health, auth and cron need `Authorization: Bearer <access token>`.
 
 ## Progress rules
 
@@ -115,6 +117,24 @@ Implemented in `lib/progress/` (`rules.ts` pure, `service.ts` database):
 
 `*.db.test.ts` tests run against the `development` branch from `.env.development.local` inside a rolled-back
 transaction; they are skipped when that file is missing.
+
+## Push notifications
+
+Android push goes through Firebase Cloud Messaging's HTTP v1 API (`lib/push/`). No Firebase SDK: the service account key
+signs a JWT, which Google exchanges for an access token.
+
+- **What is sent:** a new active temporary chore and a new active combo are announced, right after the admin saves them, to the
+  family's members (or to every registered device for a global one). Reminders go at **16:00 and 19:00 Stockholm** to children
+  and solo users (never parents) who still have undone daily chores, temporary chores due within 24 hours, or a combo they have
+  started. Each user gets each slot once (`notification_log`), however often the trigger runs.
+- **Devices:** the app registers its FCM token after sign-in, whenever FCM rotates it, and removes it before sign-out. Tokens
+  are also removed on account deletion and when FCM reports them dead.
+- **Schedule:** Vercel Hobby runs cron jobs at most once a day, so `.github/workflows/reminders.yml` calls `/api/cron/reminders`
+  four times each afternoon (covering winter and summer time). The endpoint works out the Stockholm slot itself.
+- **Configuration** (Vercel env, production):
+  - `FIREBASE_SERVICE_ACCOUNT`: the Firebase service account JSON key, on one line. Without it push is off and nothing is sent.
+  - `CRON_SECRET`: at least 32 random characters, also stored as the GitHub Actions secret `CRON_SECRET`. Without it the cron
+    endpoint refuses every call and the workflow skips.
 
 ## Auth
 
