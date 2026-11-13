@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
+import { after } from "next/server";
 import type { ZodType } from "zod";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -23,6 +24,7 @@ import {
   scopeInput,
 } from "@/lib/admin/schemas";
 import { ADMIN_COOKIE, adminCookieOptions, sealAdminSession } from "@/lib/auth/admin-session";
+import { announceCombo, announceTemporaryChore } from "@/lib/push/service";
 import { isDevLoginEnabled, jwtSigningKey } from "@/lib/auth/config";
 import { upsertUser } from "@/lib/auth/session";
 import { familySv, sv } from "./strings";
@@ -94,8 +96,23 @@ async function saveItem<T>(
   redirect(back);
 }
 
+/** After a successful create, sends its push notification once the response is out (failures are only logged). */
+async function announcing(created: Promise<catalog.SaveResult>, announce: (id: string) => Promise<unknown>) {
+  const result = await created;
+  if (result.ok)
+    after(() => announce(result.id).catch((error: unknown) => console.error("Push notification failed", error)));
+  return result;
+}
+
 export async function saveChore(_: FormState, form: FormData): Promise<FormState> {
-  return saveItem(form, choreInput, (id, input) => catalog.updateChore(db, id, input), (input, scope) => catalog.createChore(db, input, scope), "/admin/chores");
+  // Only a new temporary chore is announced; the announcement checks that itself.
+  return saveItem(
+    form,
+    choreInput,
+    (id, input) => catalog.updateChore(db, id, input),
+    (input, scope) => announcing(catalog.createChore(db, input, scope), (id) => announceTemporaryChore(db, id, new Date())),
+    "/admin/chores",
+  );
 }
 
 export async function saveReward(_: FormState, form: FormData): Promise<FormState> {
@@ -113,7 +130,13 @@ export async function saveAchievement(_: FormState, form: FormData): Promise<For
 }
 
 export async function saveCombo(_: FormState, form: FormData): Promise<FormState> {
-  return saveItem(form, comboInput, (id, input) => catalog.updateCombo(db, id, input), (input, scope) => catalog.createCombo(db, input, scope), "/admin/combos");
+  return saveItem(
+    form,
+    comboInput,
+    (id, input) => catalog.updateCombo(db, id, input),
+    (input, scope) => announcing(catalog.createCombo(db, input, scope), (id) => announceCombo(db, id, new Date())),
+    "/admin/combos",
+  );
 }
 
 async function toggle(form: FormData, fn: (exec: typeof db, id: string, active: boolean) => Promise<boolean>) {

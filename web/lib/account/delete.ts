@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
-import { families, familyMembers, refreshTokens, users } from "../../db/schema";
+import { deviceTokens, families, familyMembers, refreshTokens, users } from "../../db/schema";
 
 // Account deletion (GDPR erasure) by anonymisation: the user row stays so the append-only ledger,
 // completions and redemptions remain consistent, but nothing in it points at the person any more.
@@ -45,6 +45,7 @@ export async function deleteAccount(exec: Executor, userId: string, now: Date, {
 
     await tx.delete(familyMembers).where(eq(familyMembers.userId, userId));
     await tx.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+    await tx.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
     await tx
       .update(users)
       .set({

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import type { Executor } from "../../db/executor";
-import { chores, families, familyMembers, pointLedger, refreshTokens, users } from "../../db/schema";
+import { chores, deviceTokens, families, familyMembers, pointLedger, refreshTokens, users } from "../../db/schema";
 import { findAdmin } from "../admin/catalog";
 import { startSessionWith, upsertUserWith } from "../test/auth-helpers";
 import { createFamily, joinFamily, updateFamily } from "../family/service";
@@ -27,6 +27,7 @@ describe.skipIf(!hasDevDatabase)("account deletion (development database, rolled
       const { id, identity } = await seedUser(tx, "admin");
       await tx.insert(pointLedger).values({ userId: id, delta: 50, reason: "admin_adjustment" });
       await startSessionWith(tx, id);
+      await tx.insert(deviceTokens).values({ token: `tok-${id}`, userId: id, platform: "android" });
 
       expect(await deleteAccount(tx, id, now)).toEqual({ ok: true });
 
@@ -34,6 +35,7 @@ describe.skipIf(!hasDevDatabase)("account deletion (development database, rolled
       expect(row).toMatchObject({ displayName: DELETED_NAME, email: null, role: "user", deletedAt: now });
       expect(row.providerUserId).not.toBe(identity.providerUserId);
       expect(await tx.select().from(refreshTokens).where(eq(refreshTokens.userId, id))).toEqual([]);
+      expect(await tx.select().from(deviceTokens).where(eq(deviceTokens.userId, id))).toEqual([]); // no more notifications
       expect((await loadStats(tx, id, now)).balance).toBe(50); // history intact, just anonymous
       expect(await findAdmin(tx, id)).toBeNull();
 

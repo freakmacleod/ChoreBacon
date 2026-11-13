@@ -500,3 +500,8 @@ npm-debug.log*
 # ── OS ──────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ── Firebase ────────────────────────────────────────────────────
+# The app's Firebase config identifies the owner's Firebase project; kept out of this public repo.
+google-services.json
+GoogleService-Info.plist

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using ChoreBacon.Contracts.Auth;
 using ChoreBacon.Contracts.Family;
 using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Contracts.Push;
 
 namespace ChoreBacon.Contracts;
 
@@ -37,4 +38,6 @@ namespace ChoreBacon.Contracts;
 [JsonSerializable(typeof(FamilyChoreRequest))]
 [JsonSerializable(typeof(FamilyRewardRequest))]
 [JsonSerializable(typeof(IdResponse))]
+[JsonSerializable(typeof(RegisterDeviceRequest))]
+[JsonSerializable(typeof(UnregisterDeviceRequest))]
 public sealed partial class ContractsJsonContext : JsonSerializerContext;

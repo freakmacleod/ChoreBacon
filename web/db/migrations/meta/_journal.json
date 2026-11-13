@@ -71,6 +71,13 @@
       "when": 1794545521987,
       "tag": "0009_temporary_chores",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794545934852,
+      "tag": "0010_push_notifications",
+      "breakpoints": true
     }
   ]
 }

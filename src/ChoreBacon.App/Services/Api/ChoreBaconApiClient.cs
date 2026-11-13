@@ -1,6 +1,8 @@
+using System.Net.Http.Json;
 using ChoreBacon.Contracts;
 using ChoreBacon.Contracts.Auth;
 using ChoreBacon.Contracts.Progress;
+using ChoreBacon.Contracts.Push;
 
 namespace ChoreBacon.Services.Api;
 
@@ -31,6 +33,12 @@ public sealed class ChoreBaconApiClient(HttpClient http) : ApiClientBase(http), 
 
     public async Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken) =>
         await GetAsync("api/v1/achievements", Json.ListAchievementDto, cancellationToken);
+
+    public Task RegisterDeviceAsync(string token, string platform, CancellationToken cancellationToken) =>
+        SendAsync(HttpMethod.Put, "api/v1/me/devices", JsonContent.Create(new RegisterDeviceRequest(token, platform), Json.RegisterDeviceRequest), cancellationToken);
+
+    public Task UnregisterDeviceAsync(string token, CancellationToken cancellationToken) =>
+        SendAsync(HttpMethod.Delete, "api/v1/me/devices", JsonContent.Create(new UnregisterDeviceRequest(token), Json.UnregisterDeviceRequest), cancellationToken);
 
     public Task DeleteAccountAsync(CancellationToken cancellationToken) =>
         SendAsync(HttpMethod.Delete, "api/v1/me", content: null, cancellationToken);
