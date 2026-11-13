@@ -6,6 +6,7 @@ import { sv } from "../strings";
 
 const links = [
   ["/admin/chores", sv.nav.chores],
+  ["/admin/combos", sv.nav.combos],
   ["/admin/rewards", sv.nav.rewards],
   ["/admin/achievements", sv.nav.achievements],
   ["/admin/families", sv.nav.families],

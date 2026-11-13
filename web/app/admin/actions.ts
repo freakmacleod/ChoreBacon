@@ -14,6 +14,7 @@ import {
   type FieldErrors,
   achievementInput,
   choreInput,
+  comboInput,
   familyInput,
   familyMemberInput,
   parseForm,
@@ -62,6 +63,8 @@ function saveErrors(reason: Extract<catalog.SaveResult, { ok: false }>["reason"]
       return { scope: sv.common.familyNotFound };
     case "global_stock":
       return { stock: sv.rewards.globalStock };
+    case "chore_scope":
+      return { choreIds: sv.combos.choreScope };
     default:
       return { form: sv.common.notFound };
   }
@@ -107,6 +110,10 @@ export async function saveAchievement(_: FormState, form: FormData): Promise<For
   );
 }
 
+export async function saveCombo(_: FormState, form: FormData): Promise<FormState> {
+  return saveItem(form, comboInput, (id, input) => catalog.updateCombo(db, id, input), (input, scope) => catalog.createCombo(db, input, scope), "/admin/combos");
+}
+
 async function toggle(form: FormData, fn: (exec: typeof db, id: string, active: boolean) => Promise<boolean>) {
   await requireAdmin();
   const id = idOf(form);
@@ -116,6 +123,10 @@ async function toggle(form: FormData, fn: (exec: typeof db, id: string, active: 
 
 export async function setChoreActive(form: FormData) {
   await toggle(form, catalog.setChoreActive);
+}
+
+export async function setComboActive(form: FormData) {
+  await toggle(form, catalog.setComboActive);
 }
 
 export async function setRewardActive(form: FormData) {

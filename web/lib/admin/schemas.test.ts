@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { achievementInput, choreInput, familyInput, familyMemberInput, parseForm, rewardInput, scopeInput } from "./schemas";
+import { achievementInput, choreInput, comboInput, familyInput, familyMemberInput, parseForm, rewardInput, scopeInput } from "./schemas";
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -79,5 +79,27 @@ describe("admin form validation", () => {
     expect(parseForm(familyInput, form({ name: "" }))).toMatchObject({ ok: false, errors: { name: "Obligatoriskt" } });
     const member = parseForm(familyMemberInput, form({ userId: "nope", role: "admin" }));
     expect(member.ok ? {} : Object.keys(member.errors).sort()).toEqual(["role", "userId"]);
+  });
+
+  it("parses a combo's chores from a group of checkboxes", () => {
+    const [a, b] = ["0b9c4f1e-3a2d-4c5b-9e8f-7a6b5c4d3e2f", "1c8d5e2f-4b3a-4d6c-8f9e-6b5a4c3d2e1f"];
+    const data = form({ title: "Morgonrutin", icon: "combo_fire", bonusPoints: "20", period: "day", isActive: "on" });
+    data.append("choreIds", a);
+    data.append("choreIds", b);
+    data.append("choreIds", a);
+    expect(parseForm(comboInput, data)).toEqual({
+      ok: true,
+      data: { title: "Morgonrutin", description: "", icon: "combo_fire", bonusPoints: 20, period: "day", choreIds: [a, b], isActive: true },
+    });
+
+    const one = form({ title: "x", icon: "combo_fire", bonusPoints: "0", period: "month", choreIds: a });
+    expect(parseForm(comboInput, one)).toMatchObject({
+      ok: false,
+      errors: { bonusPoints: "Minst 1", period: "Välj dag eller vecka", choreIds: "Välj minst två sysslor" },
+    });
+    expect(parseForm(comboInput, form({ title: "x", icon: "combo_fire", bonusPoints: "5", period: "week" }))).toMatchObject({
+      ok: false,
+      errors: { choreIds: "Välj minst två sysslor" },
+    });
   });
 });

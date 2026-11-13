@@ -57,6 +57,13 @@
       "when": 1794503372355,
       "tag": "0007_achievement_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794544989375,
+      "tag": "0008_chore_combos",
+      "breakpoints": true
     }
   ]
 }

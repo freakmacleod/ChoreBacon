@@ -61,7 +61,8 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | POST | `/api/v1/facebook/data-deletion` | Facebook's data deletion callback (`signed_request`, verified with the app secret) → `{ url, confirmation_code }` |
 | GET | `/api/v1/me/progress` | Balance, lifetime earned, points spent, chores completed, streak, chores done this period / total, 3 latest achievements, `familyName` (null without a family) |
 | GET | `/api/v1/chores` | Visible chores, each with `completedThisPeriod` for its current Stockholm window and `isFamilyItem` |
-| POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, balance, unlockedAchievements }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
+| POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, pointsPending, balance, unlockedAchievements, comboBonuses }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
+| GET | `/api/v1/combos` | Visible combos with each chore's `done`/`pending` for the combo's current Stockholm day or week, and `awardedThisPeriod` |
 | GET | `/api/v1/rewards` | Visible rewards; `stock` null = unlimited, 0 = sold out; `isFamilyItem` for the family's own |
 | POST | `/api/v1/rewards/{id}/redeem` | 201 `{ redemption, balance, unlockedAchievements }`; 409 `insufficient_points` / `reward_out_of_stock` |
 | GET | `/api/v1/achievements` | Active global achievements and the user's family's own (plus any the user already unlocked); `unlockedAt` null while locked, `isFamilyItem` |
@@ -72,7 +73,7 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | POST | `/api/v1/me/family/invite-code` | Parents: new code, the old one stops working |
 | PATCH / DELETE | `/api/v1/me/family/members/{userId}` | Parents: `{ role }` or remove; 409 `last_parent` |
 | GET | `/api/v1/me/family/completions` | Parents: pending completions |
-| POST | `/api/v1/me/family/completions/{id}/approve` \| `reject` | Parents: approve (books points) or reject (frees the slot); 409 `not_pending` |
+| POST | `/api/v1/me/family/completions/{id}/approve` \| `reject` | Parents: approve (books points and any combo bonus) or reject (frees the slot); 409 `not_pending` |
 | GET | `/api/v1/me/family/redemptions` | Parents: redemptions to hand over |
 | POST | `/api/v1/me/family/redemptions/{id}/fulfil` | Parents: mark handed over |
 | GET / POST | `/api/v1/me/family/chores` \| `rewards` | Parents: the family's catalog view; POST adds a family-only item |
@@ -94,6 +95,10 @@ Implemented in `lib/progress/` (`rules.ts` pure, `service.ts` database):
 - **Achievements** (rule 1): points achievements use lifetime earned points, never the balance. Bonuses are
   ledger entries and can cascade into further points achievements. A family's own achievements are seen and
   unlocked only by its current members (on the member's own stats); ones already unlocked stay after leaving.
+- **Combos**: all of a combo's chores approved within the same Stockholm day or ISO week pays its bonus once per
+  user and period (`combo_awards` unique index; ledger reason `combo_bonus`, which counts as earned points). With
+  approval, the window is the day the chore was done, not the day it was approved. A combo is only shown, and only
+  pays, while all its chores are visible to the user; global combos hold only global chores.
 - **Streak**: consecutive Stockholm days with a completion, ending today or yesterday.
 - **Families** (one per user): the creator is a parent; others join with the invite code as children (a parent can
   promote them). Members see global items the family has not switched off, with its point/cost overrides, plus
@@ -118,7 +123,7 @@ transaction; they are skipped when that file is missing.
 
 ## Admin
 
-`/admin` is the admin GUI (Swedish): chores, rewards and achievements (global or one family's), families, and the user list.
+`/admin` is the admin GUI (Swedish): chores, combos, rewards and achievements (global or one family's), families, and the user list.
 
 - **Sign-in:** the same Google/Facebook flow as the app, started with `/api/v1/auth/{provider}/start?client=admin`. The callback sets
   `cb_admin_session`, a signed HttpOnly cookie valid for 8 hours. Only users with role `admin` get one, and the role is re-read
@@ -136,6 +141,8 @@ transaction; they are skipped when that file is missing.
 - **Global or family:** each chore, reward and achievement is either global or belongs to one family, picked under
   "Gäller" when it is created. It cannot be changed afterwards (make a new item and deactivate the old one instead).
   The lists show the scope and can be filtered by it (`?scope=global` or a family id).
+- **Combos:** pick two to ten chores, a bonus and day or week. A global combo can only contain global chores; a family's combo
+  can also contain the family's own. Changing a combo's chores does not take back bonuses already paid.
 - **Stock:** only family rewards have one (global rewards are unlimited); an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.
 - **Roles:** the first admin is granted with `npm run admin:grant -- --email … --production` after that person has signed in
   once. After that, use the Användare page. An admin cannot remove their own admin role.

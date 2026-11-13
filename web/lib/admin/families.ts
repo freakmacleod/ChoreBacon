@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Executor } from "../../db/executor";
-import { achievements, choreFamilySettings, chores, families, familyMembers, rewardFamilySettings, rewards, users } from "../../db/schema";
+import { achievements, choreFamilySettings, chores, combos, families, familyMembers, rewardFamilySettings, rewards, users } from "../../db/schema";
 import { formatInviteCode } from "../family/invite-code";
 import { unusedInviteCode } from "../family/service";
 
@@ -58,6 +58,8 @@ export async function getFamilyDetail(exec: Executor, familyId: string) {
     .where(eq(achievements.familyId, familyId))
     .orderBy(desc(achievements.isActive), asc(achievements.threshold));
 
+  const ownCombos = await exec.select().from(combos).where(eq(combos.familyId, familyId)).orderBy(desc(combos.isActive), asc(combos.title));
+
   const choreChanges = await exec
     .select({
       choreId: chores.id,
@@ -91,6 +93,7 @@ export async function getFamilyDetail(exec: Executor, familyId: string) {
     ownChores,
     ownRewards,
     ownAchievements,
+    ownCombos,
     choreChanges,
     rewardChanges,
   };

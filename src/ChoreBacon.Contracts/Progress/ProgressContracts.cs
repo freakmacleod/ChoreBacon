@@ -48,6 +48,13 @@ public enum AchievementRarity
     [JsonStringEnumMemberName("legendary")] Legendary,
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<ComboPeriod>))]
+public enum ComboPeriod
+{
+    [JsonStringEnumMemberName("day")] Day,
+    [JsonStringEnumMemberName("week")] Week,
+}
+
 /// <param name="CompletedThisPeriod">Done in the current Stockholm window (today, this ISO week, this month, or ever).</param>
 /// <param name="IsFamilyItem">The family's own chore (false for the global catalog).</param>
 public sealed record ChoreDto(
@@ -64,12 +71,34 @@ public sealed record ChoreDto(
 public sealed record CompletionDto(Guid Id, Guid ChoreId, string LocalDate, string PeriodKey, CompletionStatus Status, DateTimeOffset CompletedAt);
 
 /// <param name="PointsPending">Points waiting for a parent's approval (then PointsEarned is 0).</param>
+/// <param name="ComboBonuses">Combos this completion finished (none while it waits for approval).</param>
 public sealed record CompleteChoreResponse(
     CompletionDto Completion,
     int PointsEarned,
     int PointsPending,
     int Balance,
-    IReadOnlyList<AchievementDto> UnlockedAchievements);
+    IReadOnlyList<AchievementDto> UnlockedAchievements,
+    IReadOnlyList<ComboBonusDto>? ComboBonuses = null);
+
+/// <summary>A combo bonus that was just paid.</summary>
+public sealed record ComboBonusDto(Guid ComboId, string Title, string Icon, int BonusPoints);
+
+/// <param name="Done">Done in the combo's current day or week (approved, or waiting for approval).</param>
+/// <param name="Pending">Done but still waiting for a parent's approval.</param>
+public sealed record ComboChoreDto(Guid ChoreId, string Title, string Icon, bool Done, bool Pending);
+
+/// <summary>All of <paramref name="Chores"/> done within the same Stockholm day or ISO week pays <paramref name="BonusPoints"/> once.</summary>
+/// <param name="AwardedThisPeriod">The bonus was already paid for the current day or week.</param>
+public sealed record ComboDto(
+    Guid Id,
+    string Title,
+    string Description,
+    string Icon,
+    int BonusPoints,
+    ComboPeriod Period,
+    IReadOnlyList<ComboChoreDto> Chores,
+    bool AwardedThisPeriod,
+    bool IsFamilyItem = false);
 
 /// <param name="Stock">Null = unlimited, 0 = sold out.</param>
 /// <param name="IsFamilyItem">The family's own reward (false for the global catalog).</param>

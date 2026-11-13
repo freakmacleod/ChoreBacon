@@ -20,6 +20,9 @@ public sealed class ChoreBaconApiClient(HttpClient http) : ApiClientBase(http), 
     public Task<CompleteChoreResponse> CompleteChoreAsync(Guid choreId, CancellationToken cancellationToken) =>
         PostAsync($"api/v1/chores/{choreId}/complete", Json.CompleteChoreResponse, cancellationToken);
 
+    public async Task<IReadOnlyList<ComboDto>> GetCombosAsync(CancellationToken cancellationToken) =>
+        await GetAsync("api/v1/combos", Json.ListComboDto, cancellationToken);
+
     public async Task<IReadOnlyList<RewardDto>> GetRewardsAsync(CancellationToken cancellationToken) =>
         await GetAsync("api/v1/rewards", Json.ListRewardDto, cancellationToken);
 

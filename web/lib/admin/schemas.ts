@@ -24,6 +24,7 @@ const icon = z.string({ error: "Välj en ikon" }).trim().refine(isKnownIcon, { e
 export const FREQUENCIES = ["daily", "weekly", "monthly", "once"] as const;
 export const ACHIEVEMENT_RULES = ["chores_completed", "lifetime_points_earned", "streak_days", "points_spent"] as const;
 export const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"] as const;
+export const COMBO_PERIODS = ["day", "week"] as const;
 
 export const choreInput = z.object({
   title: required(100),
@@ -57,6 +58,24 @@ export const achievementInput = z.object({
   isActive: checkbox,
 });
 
+export const comboInput = z.object({
+  title: required(100),
+  description: text(500).default(""),
+  icon,
+  bonusPoints: int(1, 100_000),
+  period: z.enum(COMBO_PERIODS, { error: "Välj dag eller vecka" }),
+  // One checkbox per chore: missing when none is ticked, a string for one, an array for several.
+  choreIds: z.preprocess(
+    (value) => (value === undefined ? [] : [value].flat()),
+    z
+      .array(z.uuid({ error: "Välj sysslor i listan" }))
+      .min(2, { error: "Välj minst två sysslor" })
+      .max(10, { error: "Högst 10 sysslor" })
+      .transform((ids) => [...new Set(ids)]),
+  ),
+  isActive: checkbox,
+});
+
 /** Chosen once when an item is created: "global" or a family id. */
 export const scopeInput = z.object({
   scope: z.union([z.literal("global").transform(() => null), z.uuid({ error: "Välj global eller en familj" })], {
@@ -79,14 +98,22 @@ export const familyMemberInput = z.object({
 export type ChoreInput = z.infer<typeof choreInput>;
 export type RewardInput = z.infer<typeof rewardInput>;
 export type AchievementInput = z.infer<typeof achievementInput>;
+export type ComboInput = z.infer<typeof comboInput>;
 export type FamilyInput = z.infer<typeof familyInput>;
 
 export type FieldErrors = Partial<Record<string, string>>;
 export type Parsed<T> = { ok: true; data: T } | { ok: false; errors: FieldErrors };
 
+/** Form data as an object; a name that occurs several times (a group of checkboxes) becomes an array. */
+function formObject(form: FormData): Record<string, unknown> {
+  const object: Record<string, unknown> = {};
+  for (const [name, value] of form) object[name] = name in object ? [object[name], value].flat() : value;
+  return object;
+}
+
 /** Validates form data; on failure returns the first message per field. */
 export function parseForm<T>(schema: z.ZodType<T>, form: FormData): Parsed<T> {
-  const result = schema.safeParse(Object.fromEntries(form));
+  const result = schema.safeParse(formObject(form));
   if (result.success) return { ok: true, data: result.data };
   const errors: FieldErrors = {};
   for (const issue of result.error.issues) {

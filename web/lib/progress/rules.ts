@@ -1,4 +1,4 @@
-import { addDays, type Frequency } from "../stockholm-time";
+import { addDays, type Frequency, isoWeek } from "../stockholm-time";
 
 export type AchievementRule = "chores_completed" | "lifetime_points_earned" | "streak_days" | "points_spent";
 
@@ -83,4 +83,23 @@ export function alreadyCompletedCode(frequency: Frequency): string {
     case "once":
       return "chore_already_completed";
   }
+}
+
+export type ComboPeriod = "day" | "week";
+
+/**
+ * The Stockholm window a combo is measured in for a completion on `localDate`: its period key (where
+ * the bonus is booked once) and the first and last calendar dates it covers (ISO week = Monday–Sunday).
+ */
+export function comboWindow(period: ComboPeriod, localDate: string): { key: string; from: string; to: string } {
+  if (period === "day") return { key: localDate, from: localDate, to: localDate };
+  const [y, m, d] = localDate.split("-").map(Number);
+  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay() || 7; // Mon=1 … Sun=7
+  const from = addDays(localDate, 1 - weekday);
+  return { key: isoWeek(localDate), from, to: addDays(from, 6) };
+}
+
+/** A combo is complete when every one of its chores was done in the window. */
+export function comboComplete(choreIds: readonly string[], doneChoreIds: ReadonlySet<string>): boolean {
+  return choreIds.length > 0 && choreIds.every((id) => doneChoreIds.has(id));
 }

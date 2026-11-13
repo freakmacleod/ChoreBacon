@@ -5,6 +5,7 @@ import { pointLedger, users } from "../../db/schema";
 import {
   listAchievements as appAchievements,
   listChores as appChores,
+  listCombos as appCombos,
   listRewards as appRewards,
   completeChore,
   redeemReward,
@@ -13,23 +14,27 @@ import { closeDevDatabase, hasDevDatabase, inRollback } from "../test/dev-db";
 import {
   createAchievement,
   createChore,
+  createCombo,
   createReward,
   findAdmin,
   getChore,
+  getCombo,
   getReward,
   listAchievements,
   listChores,
+  listCombos,
   listUsers,
   setChoreActive,
   setRewardActive,
   setUserRole,
   updateAchievement,
   updateChore,
+  updateCombo,
   updateReward,
 } from "./catalog";
 import * as families from "./families";
 import type { SaveResult } from "./catalog";
-import type { AchievementInput, ChoreInput, RewardInput } from "./schemas";
+import type { AchievementInput, ChoreInput, ComboInput, RewardInput } from "./schemas";
 
 const now = new Date("2026-11-09T09:00:00Z");
 const chore: ChoreInput = { title: "Test admin chore", description: "", icon: "dishes", points: 10, frequency: "daily", isActive: true };
@@ -147,6 +152,45 @@ describe.skipIf(!hasDevDatabase)("admin catalog (development database, rolled ba
       expect((await getChore(tx, choreId))?.familyId).toBe(familyId);
 
       expect(await createChore(tx, chore, randomUUID())).toEqual({ ok: false, reason: "family_not_found" });
+    });
+  });
+
+  it("builds combos only from chores in the combo's scope", async () => {
+    await inRollback(async (tx) => {
+      const { familyId, child } = await seedFamily(tx);
+      const other = await seedFamily(tx);
+      const [a, b] = [idOf(await createChore(tx, { ...chore, title: "A" }, null)), idOf(await createChore(tx, { ...chore, title: "B" }, null))];
+      const own = idOf(await createChore(tx, { ...chore, title: "Egen" }, familyId));
+      const foreign = idOf(await createChore(tx, { ...chore, title: "Annans" }, other.familyId));
+      const combo = (choreIds: string[]): ComboInput => ({
+        title: "Kombo",
+        description: "",
+        icon: "combo_fire",
+        bonusPoints: 15,
+        period: "day",
+        choreIds,
+        isActive: true,
+      });
+
+      // Global combos only take global chores; a family's combo also its own, never another family's.
+      expect(await createCombo(tx, combo([a, own]), null)).toEqual({ ok: false, reason: "chore_scope" });
+      expect(await createCombo(tx, combo([a, foreign]), familyId)).toEqual({ ok: false, reason: "chore_scope" });
+      expect(await createCombo(tx, combo([a, randomUUID()]), null)).toEqual({ ok: false, reason: "chore_scope" });
+      const globalCombo = idOf(await createCombo(tx, combo([a, b]), null));
+      const familyCombo = idOf(await createCombo(tx, combo([a, own]), familyId));
+
+      expect(await getCombo(tx, familyCombo)).toMatchObject({ familyId, choreIds: expect.arrayContaining([a, own]) });
+      expect((await listCombos(tx, { familyId })).map((c) => c.id)).toEqual([familyCombo]);
+      expect((await listCombos(tx, "global")).find((c) => c.id === globalCombo)?.chores.map((c) => c.title)).toEqual(["A", "B"]);
+      expect((await appCombos(tx, child, now)).map((c) => c.id)).toEqual(expect.arrayContaining([globalCombo, familyCombo]));
+      expect((await appCombos(tx, other.child, now)).map((c) => c.id)).not.toContain(familyCombo);
+
+      // Edits replace the chores but keep the scope.
+      expect(await updateCombo(tx, globalCombo, combo([a, own]))).toEqual({ ok: false, reason: "chore_scope" });
+      expect(await updateCombo(tx, familyCombo, { ...combo([own, b]), period: "week" })).toEqual({ ok: true, id: familyCombo });
+      expect(await getCombo(tx, familyCombo)).toMatchObject({ familyId, period: "week", choreIds: expect.arrayContaining([own, b]) });
+      expect((await getCombo(tx, familyCombo))?.choreIds).toHaveLength(2);
+      expect(await updateCombo(tx, randomUUID(), combo([a, b]))).toEqual({ ok: false, reason: "not_found" });
     });
   });
 

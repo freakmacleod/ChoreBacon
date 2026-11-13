@@ -16,6 +16,7 @@ namespace ChoreBacon.Contracts;
 [JsonSerializable(typeof(MeResponse))]
 [JsonSerializable(typeof(List<ChoreDto>))]
 [JsonSerializable(typeof(CompleteChoreResponse))]
+[JsonSerializable(typeof(List<ComboDto>))]
 [JsonSerializable(typeof(List<RewardDto>))]
 [JsonSerializable(typeof(RedeemRewardResponse))]
 [JsonSerializable(typeof(List<AchievementDto>))]

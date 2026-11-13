@@ -36,6 +36,7 @@ public static class IconGlyphs
         {
             not null when key.StartsWith("reward_", StringComparison.Ordinal) => glyphs.GetValueOrDefault("reward_default", Default),
             not null when key.StartsWith("ach_", StringComparison.Ordinal) => glyphs.GetValueOrDefault("achievement_default", Default),
+            not null when key.StartsWith("combo_", StringComparison.Ordinal) => glyphs.GetValueOrDefault("combo_default", Default),
             _ => Default,
         };
     }

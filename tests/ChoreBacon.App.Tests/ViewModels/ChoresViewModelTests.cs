@@ -127,4 +127,55 @@ public class ChoresViewModelTests
         Assert.Empty(_navigator.Routes);
         Assert.False(_vm.IsBusy);
     }
+
+    [Fact]
+    public async Task Load_shows_combos_with_their_progress()
+    {
+        _api.OnGetChores = () => Task.FromResult<IReadOnlyList<ChoreDto>>([Dto.Chore()]);
+        _api.OnGetCombos = () => Task.FromResult<IReadOnlyList<ComboDto>>(
+        [
+            Dto.Combo("Morgonrutin", chores: [Dto.ComboChore("Bädda", done: true), Dto.ComboChore("Diska", done: true, pending: true), Dto.ComboChore("Sopor")]),
+            Dto.Combo("Veckans hjälte", period: ComboPeriod.Week, awarded: true),
+        ]);
+
+        await _vm.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(_vm.HasCombos);
+        var (day, week) = (_vm.Combos[0], _vm.Combos[1]);
+        Assert.Equal(string.Format(AppResources.Combos_Progress, 2, 3), day.ProgressText);
+        Assert.Equal(AppResources.Combos_Today, day.PeriodText);
+        Assert.Equal(
+            string.Join('\n', string.Format(AppResources.Combos_ChoreDone, "Bädda"), string.Format(AppResources.Combos_ChorePending, "Diska"),
+                string.Format(AppResources.Combos_ChoreTodo, "Sopor")),
+            day.ChoresText);
+        Assert.Equal(AppResources.Combos_Awarded, week.ProgressText);
+        Assert.Equal(AppResources.Combos_ThisWeek, week.PeriodText);
+    }
+
+    [Fact]
+    public async Task Completing_the_last_chore_of_a_combo_shows_the_bonus_and_refreshes_the_combos()
+    {
+        var chore = Dto.Chore("Diska", points: 10);
+        _api.OnGetCombos = () => Task.FromResult<IReadOnlyList<ComboDto>>([Dto.Combo(chores: [Dto.ComboChore("Diska")])]);
+        var item = await LoadWith(chore);
+        _api.OnCompleteChore = _ => Task.FromResult(
+            Dto.Completed(chore, balance: 70) with { ComboBonuses = [new ComboBonusDto(Guid.NewGuid(), "Morgonrutin", "combo_fire", 20)] });
+        _api.OnGetCombos = () => Task.FromResult<IReadOnlyList<ComboDto>>([Dto.Combo(awarded: true, chores: [Dto.ComboChore("Diska", done: true)])]);
+
+        await _vm.CompleteChoreCommand.ExecuteAsync(item);
+
+        Assert.Equal(70, _vm.Balance);
+        Assert.Equal(
+            string.Join('\n', string.Format(AppResources.Chores_PointsEarned, 10, "Diska"), string.Format(AppResources.Combos_Earned, "Morgonrutin", 20)),
+            _vm.StatusMessage);
+        Assert.Equal(AppResources.Combos_Awarded, Assert.Single(_vm.Combos).ProgressText);
+    }
+
+    [Fact]
+    public async Task Without_combos_the_section_is_hidden()
+    {
+        await LoadWith(Dto.Chore());
+        Assert.False(_vm.HasCombos);
+        Assert.Empty(_vm.Combos);
+    }
 }
