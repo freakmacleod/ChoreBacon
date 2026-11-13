@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isKnownIcon } from "../icons";
+import { fromStockholmDateTime } from "../stockholm-time";
 
 // Zod schemas for the admin forms (FormData → typed input). Messages are Swedish: they are shown
 // next to the fields.
@@ -26,14 +27,28 @@ export const ACHIEVEMENT_RULES = ["chores_completed", "lifetime_points_earned", 
 export const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"] as const;
 export const COMBO_PERIODS = ["day", "week"] as const;
 
-export const choreInput = z.object({
-  title: required(100),
-  description: text(500).default(""),
-  icon,
-  points: int(1, 10_000),
-  frequency: z.enum(FREQUENCIES, { error: "Välj hur ofta" }),
-  isActive: checkbox,
-});
+export const choreInput = z
+  .object({
+    title: required(100),
+    description: text(500).default(""),
+    icon,
+    points: int(1, 10_000),
+    frequency: z.enum(FREQUENCIES, { error: "Välj hur ofta" }),
+    // Empty = a regular chore. Otherwise a Stockholm date and time ("YYYY-MM-DDTHH:mm" from a
+    // datetime-local input): the chore is temporary and disappears then if nobody has done it.
+    expiresAt: z.preprocess(
+      (value) => (value === "" || value === undefined ? null : value),
+      z
+        .string()
+        .transform((value, ctx) => fromStockholmDateTime(value) ?? (ctx.addIssue({ code: "custom", message: "Ange datum och tid" }), z.NEVER))
+        .nullable(),
+    ),
+    isActive: checkbox,
+  })
+  .refine((chore) => chore.expiresAt === null || chore.frequency === "once", {
+    path: ["frequency"],
+    error: "En tidsbegränsad syssla görs en gång",
+  });
 
 export const rewardInput = z.object({
   title: required(100),

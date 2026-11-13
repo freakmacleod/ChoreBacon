@@ -37,7 +37,7 @@ import type { SaveResult } from "./catalog";
 import type { AchievementInput, ChoreInput, ComboInput, RewardInput } from "./schemas";
 
 const now = new Date("2026-11-09T09:00:00Z");
-const chore: ChoreInput = { title: "Test admin chore", description: "", icon: "dishes", points: 10, frequency: "daily", isActive: true };
+const chore: ChoreInput = { title: "Test admin chore", description: "", icon: "dishes", points: 10, frequency: "daily", expiresAt: null, isActive: true };
 const reward: RewardInput = { title: "Test admin reward", description: "", icon: "reward_game", cost: 10, stock: null, isActive: true };
 const achievement = (code: string): AchievementInput => ({
   code,
@@ -176,6 +176,8 @@ describe.skipIf(!hasDevDatabase)("admin catalog (development database, rolled ba
       expect(await createCombo(tx, combo([a, own]), null)).toEqual({ ok: false, reason: "chore_scope" });
       expect(await createCombo(tx, combo([a, foreign]), familyId)).toEqual({ ok: false, reason: "chore_scope" });
       expect(await createCombo(tx, combo([a, randomUUID()]), null)).toEqual({ ok: false, reason: "chore_scope" });
+      const temporary = idOf(await createChore(tx, { ...chore, frequency: "once", expiresAt: new Date(now.getTime() + 86_400_000) }, null, now));
+      expect(await createCombo(tx, combo([a, temporary]), null)).toEqual({ ok: false, reason: "chore_scope" });
       const globalCombo = idOf(await createCombo(tx, combo([a, b]), null));
       const familyCombo = idOf(await createCombo(tx, combo([a, own]), familyId));
 
@@ -191,6 +193,18 @@ describe.skipIf(!hasDevDatabase)("admin catalog (development database, rolled ba
       expect(await getCombo(tx, familyCombo)).toMatchObject({ familyId, period: "week", choreIds: expect.arrayContaining([own, b]) });
       expect((await getCombo(tx, familyCombo))?.choreIds).toHaveLength(2);
       expect(await updateCombo(tx, randomUUID(), combo([a, b]))).toEqual({ ok: false, reason: "not_found" });
+    });
+  });
+
+  it("creates temporary chores only with a deadline in the future", async () => {
+    await inRollback(async (tx) => {
+      const later = new Date(now.getTime() + 3_600_000);
+      const temporary = { ...chore, frequency: "once" as const };
+      expect(await createChore(tx, { ...temporary, expiresAt: now }, null, now)).toEqual({ ok: false, reason: "deadline_passed" });
+      const id = idOf(await createChore(tx, { ...temporary, expiresAt: later }, null, now));
+      expect((await getChore(tx, id))?.expiresAt).toEqual(later);
+      // An edit may leave the deadline passed (e.g. to reword it) or move it.
+      expect(await updateChore(tx, id, { ...temporary, expiresAt: now })).toEqual({ ok: true, id });
     });
   });
 

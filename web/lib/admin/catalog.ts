@@ -16,7 +16,7 @@ export type Scope = string | null;
 
 export type SaveResult =
   | { ok: true; id: string }
-  | { ok: false; reason: "not_found" | "duplicate_code" | "family_not_found" | "global_stock" | "chore_scope" };
+  | { ok: false; reason: "not_found" | "duplicate_code" | "family_not_found" | "global_stock" | "chore_scope" | "deadline_passed" };
 
 type ScopedTable = typeof chores | typeof rewards | typeof achievements | typeof combos;
 
@@ -52,7 +52,9 @@ export async function getChore(exec: Executor, id: string) {
   return chore ?? null;
 }
 
-export async function createChore(exec: Executor, input: ChoreInput, familyId: Scope): Promise<SaveResult> {
+/** A temporary chore must be created with a deadline in the future (an edit may move it, or leave it passed). */
+export async function createChore(exec: Executor, input: ChoreInput, familyId: Scope, now = new Date()): Promise<SaveResult> {
+  if (input.expiresAt && input.expiresAt <= now) return { ok: false, reason: "deadline_passed" };
   if (!(await familyExists(exec, familyId))) return { ok: false, reason: "family_not_found" };
   return saved(await exec.insert(chores).values({ ...input, familyId, isGlobal: familyId === null }).returning({ id: chores.id }));
 }
@@ -181,17 +183,24 @@ export async function getCombo(exec: Executor, id: string) {
   return { ...combo, choreIds: links.map((l) => l.choreId) };
 }
 
-/** Chores a combo can be built from: everything, so the form can filter by the combo's scope. */
+/** Chores a combo can be built from: all regular chores, so the form can filter by the combo's scope. */
 export const comboChoreOptions = (exec: Executor) =>
   exec
     .select({ id: chores.id, title: chores.title, icon: chores.icon, frequency: chores.frequency, familyId: chores.familyId, isActive: chores.isActive })
     .from(chores)
+    .where(isNull(chores.expiresAt))
     .orderBy(asc(chores.title));
 
-/** A global combo may only contain global chores; a family's combo also the family's own chores. */
+/**
+ * A global combo may only contain global chores; a family's combo also the family's own chores. Never
+ * temporary chores: one taken by a sibling or past its deadline would leave the combo impossible.
+ */
 async function choresFitScope(exec: Executor, choreIds: string[], familyId: Scope) {
-  const found = await exec.select({ familyId: chores.familyId }).from(chores).where(inArray(chores.id, choreIds));
-  return found.length === choreIds.length && found.every((c) => c.familyId === null || c.familyId === familyId);
+  const found = await exec
+    .select({ familyId: chores.familyId, expiresAt: chores.expiresAt })
+    .from(chores)
+    .where(inArray(chores.id, choreIds));
+  return found.length === choreIds.length && found.every((c) => (c.familyId === null || c.familyId === familyId) && c.expiresAt === null);
 }
 
 export async function createCombo(exec: Executor, input: ComboInput, familyId: Scope): Promise<SaveResult> {

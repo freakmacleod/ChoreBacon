@@ -65,6 +65,8 @@ function saveErrors(reason: Extract<catalog.SaveResult, { ok: false }>["reason"]
       return { stock: sv.rewards.globalStock };
     case "chore_scope":
       return { choreIds: sv.combos.choreScope };
+    case "deadline_passed":
+      return { expiresAt: sv.chores.deadlinePassed };
     default:
       return { form: sv.common.notFound };
   }

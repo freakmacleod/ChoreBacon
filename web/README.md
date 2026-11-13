@@ -60,8 +60,8 @@ npx neonctl connection-string development            # -> DATABASE_URL_UNPOOLED
 | DELETE | `/api/v1/me` | Deletes (anonymises) the account → 204; 409 `last_parent` while the only parent of a family with others |
 | POST | `/api/v1/facebook/data-deletion` | Facebook's data deletion callback (`signed_request`, verified with the app secret) → `{ url, confirmation_code }` |
 | GET | `/api/v1/me/progress` | Balance, lifetime earned, points spent, chores completed, streak, chores done this period / total, 3 latest achievements, `familyName` (null without a family) |
-| GET | `/api/v1/chores` | Visible chores, each with `completedThisPeriod` for its current Stockholm window and `isFamilyItem` |
-| POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, pointsPending, balance, unlockedAchievements, comboBonuses }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed` |
+| GET | `/api/v1/chores` | Visible chores, each with `completedThisPeriod` for its current Stockholm window, `isFamilyItem` and `expiresAt` (temporary chores, listed first) |
+| POST | `/api/v1/chores/{id}/complete` | 201 `{ completion, pointsEarned, pointsPending, balance, unlockedAchievements, comboBonuses }`; 409 `chore_already_completed_today` / `_this_week` / `_this_month` / `chore_already_completed`, `chore_expired`, `chore_taken` |
 | GET | `/api/v1/combos` | Visible combos with each chore's `done`/`pending` for the combo's current Stockholm day or week, and `awardedThisPeriod` |
 | GET | `/api/v1/rewards` | Visible rewards; `stock` null = unlimited, 0 = sold out; `isFamilyItem` for the family's own |
 | POST | `/api/v1/rewards/{id}/redeem` | 201 `{ redemption, balance, unlockedAchievements }`; 409 `insufficient_points` / `reward_out_of_stock` |
@@ -99,6 +99,10 @@ Implemented in `lib/progress/` (`rules.ts` pure, `service.ts` database):
   user and period (`combo_awards` unique index; ledger reason `combo_bonus`, which counts as earned points). With
   approval, the window is the day the chore was done, not the day it was approved. A combo is only shown, and only
   pays, while all its chores are visible to the user; global combos hold only global chores.
+- **Temporary chores**: a chore with `expires_at` is shown until then and simply disappears if nobody did it (no job
+  needed). It is always `once`, and the first family member to do it takes it: from that completion (pending or
+  approved) it is gone for the others (`chore_taken`); a rejection frees it again. The chore row is locked while
+  completing, so two siblings cannot both take it. Temporary chores cannot be part of a combo.
 - **Streak**: consecutive Stockholm days with a completion, ending today or yesterday.
 - **Families** (one per user): the creator is a parent; others join with the invite code as children (a parent can
   promote them). Members see global items the family has not switched off, with its point/cost overrides, plus
@@ -141,6 +145,8 @@ transaction; they are skipped when that file is missing.
 - **Global or family:** each chore, reward and achievement is either global or belongs to one family, picked under
   "Gäller" when it is created. It cannot be changed afterwards (make a new item and deactivate the old one instead).
   The lists show the scope and can be filtered by it (`?scope=global` or a family id).
+- **Temporary chores:** tick "Tidsbegränsad" on a chore and set the deadline (Swedish time). It must be in the future when
+  created; the list shows it, and "Utgången" afterwards.
 - **Combos:** pick two to ten chores, a bonus and day or week. A global combo can only contain global chores; a family's combo
   can also contain the family's own. Changing a combo's chores does not take back bonuses already paid.
 - **Stock:** only family rewards have one (global rewards are unlimited); an empty value means unlimited. Changing it is an explicit restock; nothing restocks automatically.

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import type { IconKind } from "@/lib/icons";
+import { stockholmDateTime } from "@/lib/stockholm-time";
 import { type FormState, saveAchievement, saveChore, saveCombo, saveReward } from "../actions";
 import { sv } from "../strings";
 import { IconPicker } from "./icon-picker";
@@ -10,7 +11,16 @@ import { Field, buttonClass, inputClass, secondaryButtonClass } from "./ui";
 
 /** Scope of an existing item: null family = global. */
 type Scoped = { familyId: string | null; familyName: string | null };
-type Chore = Scoped & { id: string; title: string; description: string; icon: string; points: number; frequency: string; isActive: boolean };
+type Chore = Scoped & {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  points: number;
+  frequency: string;
+  expiresAt: Date | null;
+  isActive: boolean;
+};
 type Reward = Scoped & { id: string; title: string; description: string; icon: string; cost: number; stock: number | null; isActive: boolean };
 type Achievement = Scoped & {
   id: string;
@@ -124,6 +134,7 @@ const options = (labels: Record<string, string>) =>
 
 export function ChoreForm({ chore, families }: { chore?: Chore; families: FamilyOption[] }) {
   const [state, action, pending] = useActionState(saveChore, {});
+  const [temporary, setTemporary] = useState(Boolean(chore?.expiresAt));
   return (
     <form action={action} className="max-w-lg space-y-4">
       <input type="hidden" name="id" value={chore?.id ?? ""} />
@@ -132,11 +143,32 @@ export function ChoreForm({ chore, families }: { chore?: Chore; families: Family
       <Field label={sv.chores.points} name="points" error={state.errors?.points}>
         <input id="points" name="points" type="number" min={1} defaultValue={chore?.points ?? 10} required className={inputClass} />
       </Field>
-      <Field label={sv.chores.frequency} name="frequency" error={state.errors?.frequency}>
-        <select id="frequency" name="frequency" defaultValue={chore?.frequency ?? "daily"} className={inputClass}>
-          {options(sv.chores.frequencies)}
-        </select>
-      </Field>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={temporary} onChange={(e) => setTemporary(e.target.checked)} />
+        {sv.chores.temporary}
+      </label>
+      {temporary ? (
+        <>
+          {/* A temporary chore is always a one-off. */}
+          <input type="hidden" name="frequency" value="once" />
+          <Field label={sv.chores.deadline} name="expiresAt" error={state.errors?.expiresAt ?? state.errors?.frequency} hint={sv.chores.temporaryHint}>
+            <input
+              id="expiresAt"
+              name="expiresAt"
+              type="datetime-local"
+              required
+              defaultValue={chore?.expiresAt ? stockholmDateTime(chore.expiresAt) : ""}
+              className={inputClass}
+            />
+          </Field>
+        </>
+      ) : (
+        <Field label={sv.chores.frequency} name="frequency" error={state.errors?.frequency}>
+          <select id="frequency" name="frequency" defaultValue={chore?.frequency ?? "daily"} className={inputClass}>
+            {options(sv.chores.frequencies)}
+          </select>
+        </Field>
+      )}
       <Actions pending={pending} back="/admin/chores" error={state.errors?.form} />
     </form>
   );

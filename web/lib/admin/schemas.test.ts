@@ -12,7 +12,7 @@ describe("admin form validation", () => {
     const parsed = parseForm(choreInput, form({ title: " Diska ", description: "", icon: "dishes", points: "10", frequency: "daily" }));
     expect(parsed).toEqual({
       ok: true,
-      data: { title: "Diska", description: "", icon: "dishes", points: 10, frequency: "daily", isActive: false },
+      data: { title: "Diska", description: "", icon: "dishes", points: 10, frequency: "daily", expiresAt: null, isActive: false },
     });
   });
 
@@ -100,6 +100,18 @@ describe("admin form validation", () => {
     expect(parseForm(comboInput, form({ title: "x", icon: "combo_fire", bonusPoints: "5", period: "week" }))).toMatchObject({
       ok: false,
       errors: { choreIds: "Välj minst två sysslor" },
+    });
+  });
+
+  it("reads a temporary chore's deadline as Stockholm time and keeps it a one-off", () => {
+    const temporary = (fields: Record<string, string>) =>
+      parseForm(choreInput, form({ title: "Kratta löv", icon: "leaves", points: "50", frequency: "once", ...fields }));
+    expect(temporary({ expiresAt: "2026-11-20T18:00" })).toMatchObject({ ok: true, data: { expiresAt: new Date("2026-11-20T17:00:00Z") } });
+    expect(temporary({ expiresAt: "" })).toMatchObject({ ok: true, data: { expiresAt: null } });
+    expect(temporary({ expiresAt: "fredag" })).toMatchObject({ ok: false, errors: { expiresAt: "Ange datum och tid" } });
+    expect(temporary({ expiresAt: "2026-11-20T18:00", frequency: "daily" })).toMatchObject({
+      ok: false,
+      errors: { frequency: "En tidsbegränsad syssla görs en gång" },
     });
   });
 });
