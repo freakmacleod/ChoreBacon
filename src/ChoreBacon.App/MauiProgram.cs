@@ -2,6 +2,7 @@ using ChoreBacon.Services;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
+using ChoreBacon.Services.Push;
 using ChoreBacon.Services.Ui;
 using ChoreBacon.ViewModels;
 using ChoreBacon.Views;
@@ -43,6 +44,14 @@ public static class MauiProgram
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
         builder.Services.AddHttpClient<IFamilyApi, FamilyApiClient>(c => c.BaseAddress = apiConfig.BaseAddress)
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
+
+        // ── Push notifications ────────────────────────────────────────────────
+#if ANDROID
+        builder.Services.AddSingleton<IPushTokenSource, FirebasePushTokenSource>();
+#else
+        builder.Services.AddSingleton<IPushTokenSource, NoPushTokenSource>();
+#endif
+        builder.Services.AddSingleton<IPushRegistration, PushRegistration>();
 
         // ── Services ──────────────────────────────────────────────────────────
         builder.Services.AddSingleton<IAuthService, AuthService>();

@@ -18,6 +18,12 @@ public interface IChoreBaconApi
     Task<RedeemRewardResponse> RedeemRewardAsync(Guid rewardId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AchievementDto>> GetAchievementsAsync(CancellationToken cancellationToken);
 
+    /// <summary>Registers this device's push token for the signed-in user.</summary>
+    Task RegisterDeviceAsync(string token, string platform, CancellationToken cancellationToken);
+
+    /// <summary>Stops push notifications to this device (before signing out).</summary>
+    Task UnregisterDeviceAsync(string token, CancellationToken cancellationToken);
+
     /// <summary>Deletes (anonymises) the signed-in account. 409 <c>last_parent</c> while the user is their family's only parent.</summary>
     Task DeleteAccountAsync(CancellationToken cancellationToken);
 }

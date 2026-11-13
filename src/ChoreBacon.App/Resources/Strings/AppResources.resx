@@ -454,4 +454,10 @@ Prestationer är samma för alla. Skapa en familj och dela inbjudningskoden, ell
   <data name="Chores_Temporary" xml:space="preserve">
     <value>Tidsbegränsad – först till kvarn</value>
   </data>
+  <data name="Notifications_ChannelName" xml:space="preserve">
+    <value>Sysslor och bonusar</value>
+  </data>
+  <data name="Notifications_ChannelDescription" xml:space="preserve">
+    <value>Påminnelser om dagens sysslor, nya tidsbegränsade sysslor och nya kombos.</value>
+  </data>
 </root>

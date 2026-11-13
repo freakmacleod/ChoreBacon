@@ -16,6 +16,10 @@ internal sealed class FakeChoreBaconApi : IChoreBaconApi
     public Func<Guid, Task<RedeemRewardResponse>> OnRedeemReward { get; set; } = _ => throw new NotSupportedException();
     public Func<Task<IReadOnlyList<AchievementDto>>> OnGetAchievements { get; set; } = () => throw new NotSupportedException();
     public Func<Task> OnDeleteAccount { get; set; } = () => Task.CompletedTask;
+    public Func<string, Task> OnRegisterDevice { get; set; } = _ => Task.CompletedTask;
+    public Func<string, Task> OnUnregisterDevice { get; set; } = _ => Task.CompletedTask;
+    public List<(string Token, string Platform)> RegisteredDevices { get; } = [];
+    public List<string> UnregisteredDevices { get; } = [];
     public int Deletions { get; private set; }
 
     public List<Guid> Completed { get; } = [];
@@ -32,6 +36,18 @@ internal sealed class FakeChoreBaconApi : IChoreBaconApi
     {
         Completed.Add(choreId);
         return OnCompleteChore(choreId);
+    }
+
+    public Task RegisterDeviceAsync(string token, string platform, CancellationToken cancellationToken)
+    {
+        RegisteredDevices.Add((token, platform));
+        return OnRegisterDevice(token);
+    }
+
+    public Task UnregisterDeviceAsync(string token, CancellationToken cancellationToken)
+    {
+        UnregisteredDevices.Add(token);
+        return OnUnregisterDevice(token);
     }
 
     public Task DeleteAccountAsync(CancellationToken cancellationToken)

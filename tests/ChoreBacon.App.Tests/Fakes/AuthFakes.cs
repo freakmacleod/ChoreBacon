@@ -72,3 +72,14 @@ internal sealed class FakeWebAuthenticator(Func<WebAuthenticatorOptions, WebAuth
     public static WebAuthenticatorResult Callback(string fragment) =>
         new(new Uri($"chorebacon://auth#{fragment}"));
 }
+
+/// <summary>Counts push registrations; records whether the user was still signed in when unregistering.</summary>
+internal sealed class FakePushRegistration(InMemoryTokenStore store) : ChoreBacon.Services.Push.IPushRegistration
+{
+    public int Registrations { get; private set; }
+    public List<bool> UnregisteredWhileSignedIn { get; } = [];
+
+    public Task RegisterAsync(CancellationToken cancellationToken) { Registrations++; return Task.CompletedTask; }
+    public Task TokenRefreshedAsync(string token) => Task.CompletedTask;
+    public Task UnregisterAsync(CancellationToken cancellationToken) { UnregisteredWhileSignedIn.Add(store.Tokens is not null); return Task.CompletedTask; }
+}

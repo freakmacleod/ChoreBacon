@@ -3,6 +3,7 @@ using ChoreBacon.Contracts.Auth;
 using ChoreBacon.Services.Api;
 using ChoreBacon.Services.Auth;
 using ChoreBacon.Services.Interfaces;
+using ChoreBacon.Services.Push;
 
 namespace ChoreBacon.Services;
 
@@ -16,7 +17,8 @@ public class AuthService(
     IAuthApi authApi,
     IChoreBaconApi api,
     TokenManager tokens,
-    ApiConfig config) : IAuthService
+    ApiConfig config,
+    IPushRegistration push) : IAuthService
 {
     public MeResponse? CurrentUser { get; private set; }
     public bool IsLoggedIn => CurrentUser is not null;
@@ -105,6 +107,9 @@ public class AuthService(
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
         var stored = await tokens.LoadAsync();
+        // While the session still works: this device should stop getting the user's notifications.
+        if (stored is not null)
+            await push.UnregisterAsync(cancellationToken);
         await tokens.ClearAsync();
         CurrentUser = null;
 
@@ -147,6 +152,8 @@ public class AuthService(
         }
 
         CurrentUser = me;
+        // Not awaited: it may show the notification permission dialog, and sign-in must not wait for it.
+        _ = push.RegisterAsync(CancellationToken.None);
         return me;
     }
 }

@@ -17,13 +17,16 @@ public class AuthServiceTests
     private readonly FakeChoreBaconApi _api = new() { OnGetMe = () => Task.FromResult(Me) };
     private readonly ApiConfig _config = new(new Uri("https://api.test"));
     private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+    private readonly FakePushRegistration _push;
+
+    public AuthServiceTests() => _push = new FakePushRegistration(_store);
 
     private AuthService CreateService(FakeWebAuthenticator? web = null)
     {
         var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 10, 12, 0, 0, TimeSpan.Zero));
         return new AuthService(
             web ?? new FakeWebAuthenticator(_ => throw new InvalidOperationException("browser not expected")),
-            _authApi, _api, new TokenManager(_store, _authApi, time), _config);
+            _authApi, _api, new TokenManager(_store, _authApi, time), _config, _push);
     }
 
     [Fact]
@@ -157,5 +160,26 @@ public class AuthServiceTests
         Assert.Null(_store.Tokens);
         Assert.False(auth.IsLoggedIn);
         Assert.Equal(["r"], _authApi.LoggedOut);
+    }
+
+    [Fact]
+    public async Task Sign_in_registers_the_device_for_push_and_sign_out_removes_it_while_still_signed_in()
+    {
+        var auth = CreateService(new FakeWebAuthenticator(_ => FakeWebAuthenticator.Callback("access_token=a&refresh_token=r1&expires_in=900")));
+
+        await auth.LoginWithGoogleAsync(_ct);
+        Assert.Equal(1, _push.Registrations);
+
+        await auth.LogoutAsync(_ct);
+        Assert.Equal([true], _push.UnregisteredWhileSignedIn);
+        Assert.Null(_store.Tokens);
+    }
+
+    [Fact]
+    public async Task A_restored_session_registers_the_device_too()
+    {
+        _store.Tokens = new AuthTokens("a", "r1", DateTimeOffset.MaxValue);
+        Assert.True(await CreateService().TryRestoreSessionAsync(_ct));
+        Assert.Equal(1, _push.Registrations);
     }
 }

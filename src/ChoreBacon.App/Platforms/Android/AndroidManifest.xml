@@ -1,8 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
+	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+		<!-- Push notifications that arrive while the app is in the background (Firebase shows them itself). -->
+		<meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="chorebacon_default" />
+		<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
+	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+	<!-- Android 13+: asked for after sign-in, for reminders and new chores and combos. -->
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<!-- Android 11+ package visibility: WebAuthenticator needs to find a Custom Tabs browser. -->
 	<queries>
 		<intent>

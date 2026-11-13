@@ -59,3 +59,11 @@ whole solution also builds the Android target and therefore needs the Android SD
 
 Never commit secrets. Backend secrets live in Vercel environment variables and locally in
 `web/.env.local` (gitignored). See [CLAUDE.md](CLAUDE.md#secrets-and-config).
+
+### Push notifications (Android)
+
+Push uses Firebase Cloud Messaging. The app's Firebase config is **not** in the repo (it identifies the owner's Firebase
+project). To build with push, download `google-services.json` for the Android app `se.ictor.chorebacon` from the Firebase
+console and put it at `src/ChoreBacon.App/Platforms/Android/google-services.json` (gitignored). Without it the app builds
+and works as before, just without push. Server-side setup: see [web/README.md](web/README.md#push-notifications).
+
