@@ -326,7 +326,8 @@ export async function updateFamilyChore(exec: Executor, userId: string, choreId:
   if (isFailure(parent)) return parent;
   const updated = await exec
     .update(chores)
-    .set(input)
+    // A temporary chore (set up in the admin) stays a one-off whatever frequency the app sends.
+    .set({ ...input, frequency: sql`case when ${chores.expiresAt} is null then ${input.frequency}::chore_frequency else 'once' end` })
     .where(and(eq(chores.id, choreId), eq(chores.familyId, parent.familyId)))
     .returning({ id: chores.id });
   return updated.length > 0 ? { ok: true as const, id: choreId } : fail(404, "chore_not_found", "No family chore with that id");

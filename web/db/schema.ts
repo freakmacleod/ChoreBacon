@@ -114,11 +114,15 @@ export const chores = pgTable(
     isGlobal: boolean("is_global").notNull(),
     familyId: uuid("family_id").references(() => families.id, { onDelete: "cascade" }),
     isActive: boolean("is_active").notNull().default(true),
+    // Temporary chore: shown until this instant, then gone if nobody did it. Done once, by the first
+    // member of the family to do it (frequency is always "once").
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
     check("chores_points_positive", sql`${t.points} > 0`),
     check("chores_scope", sql`${t.isGlobal} = (${t.familyId} IS NULL)`),
+    check("chores_temporary_once", sql`${t.expiresAt} IS NULL OR ${t.frequency} = 'once'`),
     index("chores_family_idx").on(t.familyId),
   ],
 );
